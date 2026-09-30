@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { DEFAULT_DIFF_MAX_LINES, DiffBlock as LocalizedDiffBlock, type DiffHunk } from '../src/index.ts'
 import { diffBlockLabels } from './labels.client.ts'
-import { diffTotals } from '../src/DiffBlock.tsx'
+import { diffFragments, diffTotals } from '../src/DiffBlock.tsx'
 
 function DiffBlock(props: Omit<ComponentProps<typeof LocalizedDiffBlock>, 'labels'>) {
   return <LocalizedDiffBlock {...props} labels={diffBlockLabels} />
@@ -227,5 +227,131 @@ describe('DiffBlock copy', () => {
     await act(async () => { fireEvent.click(copy) })
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: '复制成功' })) })
     expect(writeText).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('DiffBlock review actions', () => {
+  // Two distant changes in one file: two fragments, separated by a `⋯` header.
+  const distantChange: DiffHunk = {
+    path: 'items.txt',
+    oldText: Array.from({ length: 50 }, (_v, i) => `item ${i}`).join('\n'),
+    newText: Array.from({ length: 50 }, (_v, i) => i === 10 || i === 40 ? `changed ${i}` : `item ${i}`).join('\n'),
+  }
+
+  it('exposes the fragments a review index addresses', () => {
+    expect(diffFragments(distantChange)).toHaveLength(2)
+    expect(diffFragments({ path: 'one.ts', oldText: 'a', newText: 'b' })).toHaveLength(1)
+  })
+
+  it('hides every review action when no handler is wired', () => {
+    const { container } = render(<DiffBlock diffs={[{ path: 'a.ts', oldText: 'old', newText: 'new' }]} />)
+    expect(screen.queryByRole('button', { name: /接受|拒绝/ })).toBeNull()
+    expect(container.querySelector('[data-review="false"]')).toBeTruthy()
+    expect(container.querySelector('[data-review="true"]')).toBeNull()
+  })
+
+  it('accepts one whole change with its index and hunk', () => {
+    const onAccept = vi.fn()
+    const hunk: DiffHunk = { path: 'a.ts', oldText: 'old', newText: 'new' }
+    render(<DiffBlock diffs={[hunk]} onAccept={onAccept} />)
+    fireEvent.click(screen.getByRole('button', { name: '接受 a.ts 的全部更改' }))
+    expect(onAccept).toHaveBeenCalledWith(0, hunk, undefined)
+  })
+
+  it('leaves out the accept action when only reject is wired', () => {
+    const onReject = vi.fn()
+    const hunk: DiffHunk = { path: 'b.ts', oldText: null, newText: 'x' }
+    render(<DiffBlock diffs={[hunk]} onReject={onReject} />)
+    expect(screen.queryByRole('button', { name: /接受/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '拒绝 b.ts 的全部更改' }))
+    expect(onReject).toHaveBeenCalledWith(0, hunk, undefined)
+  })
+
+  it('leaves out the reject action when only accept is wired', () => {
+    const onAccept = vi.fn()
+    const hunk: DiffHunk = { path: 'c.ts', oldText: 'a', newText: 'b' }
+    render(<DiffBlock diffs={[hunk]} onAccept={onAccept} />)
+    expect(screen.queryByRole('button', { name: /拒绝/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '接受 c.ts 的全部更改' }))
+    expect(onAccept).toHaveBeenCalledWith(0, hunk, undefined)
+  })
+
+  it('addresses one fragment of a multi-fragment change', () => {
+    const onAccept = vi.fn()
+    const onReject = vi.fn()
+    const { container } = render(
+      <DiffBlock diffs={[distantChange]} maxLines={100} onAccept={onAccept} onReject={onReject} />,
+    )
+    // The change header addresses every fragment; the `⋯` header opens just one.
+    expect(container.querySelectorAll('[data-diff-fragment]')).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: '接受 items.txt 第 2 / 2 段更改' }))
+    fireEvent.click(screen.getByRole('button', { name: '拒绝 items.txt 第 2 / 2 段更改' }))
+    expect(onAccept).toHaveBeenCalledWith(0, distantChange, 1)
+    expect(onReject).toHaveBeenCalledWith(0, distantChange, 1)
+    fireEvent.click(screen.getByRole('button', { name: '接受 items.txt 的全部更改' }))
+    expect(onAccept).toHaveBeenLastCalledWith(0, distantChange, undefined)
+  })
+
+  it('opens no fragment header when a change has a single fragment', () => {
+    const onAccept = vi.fn()
+    const hunk: DiffHunk = { path: 'one.ts', oldText: 'a', newText: 'b' }
+    const { container } = render(<DiffBlock diffs={[hunk]} onAccept={onAccept} />)
+    expect(container.querySelectorAll('[data-diff-fragment]')).toHaveLength(0)
+    expect(container.querySelectorAll('[data-diff-header="path"]')).toHaveLength(1)
+    // That single fragment is the change, so its own header addresses it.
+    fireEvent.click(screen.getByRole('button', { name: '接受 one.ts 的全部更改' }))
+    expect(onAccept).toHaveBeenCalledWith(0, hunk, undefined)
+  })
+
+  it('tones each header from the lines it opens', () => {
+    const { container } = render(<DiffBlock diffs={[
+      { path: 'added.ts', oldText: null, newText: 'new' },
+      { path: 'removed.ts', oldText: 'old', newText: '' },
+      { path: 'edited.ts', oldText: 'old', newText: 'new' },
+      { path: 'same.ts', oldText: 'same', newText: 'same' },
+    ]} maxLines={100} />)
+    const tones = [...container.querySelectorAll('[data-diff-header]')]
+      .map(node => `${node.getAttribute('data-diff-header')}:${String(node.getAttribute('data-tone'))}`)
+    expect(tones).toEqual(['path:add', 'path:del', 'path:mixed', 'path:null'])
+  })
+
+  it('flashes a clicked action and returns to idle', async () => {
+    vi.useFakeTimers()
+    const onAccept = vi.fn()
+    render(<DiffBlock diffs={[{ path: 'a.ts', oldText: 'old', newText: 'new' }]} onAccept={onAccept} />)
+    const accept = screen.getByRole('button', { name: '接受 a.ts 的全部更改' })
+    fireEvent.click(accept)
+    expect(onAccept).toHaveBeenCalledTimes(1)
+    expect(accept.getAttribute('data-pending')).toBe('true')
+    await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+    expect(accept.getAttribute('data-pending')).toBeNull()
+  })
+
+  it('keeps the newest flash when an older timer expires', async () => {
+    vi.useFakeTimers()
+    render(<DiffBlock diffs={[
+      { path: 'a.ts', oldText: 'old', newText: 'new' },
+      { path: 'b.ts', oldText: 'p', newText: 'q' },
+    ]} onAccept={vi.fn()} />)
+    const first = screen.getByRole('button', { name: '接受 a.ts 的全部更改' })
+    const second = screen.getByRole('button', { name: '接受 b.ts 的全部更改' })
+    fireEvent.click(first)
+    await act(async () => { await vi.advanceTimersByTimeAsync(400) })
+    fireEvent.click(second)
+    await act(async () => { await vi.advanceTimersByTimeAsync(600) })
+    expect(first.getAttribute('data-pending')).toBeNull()
+    expect(second.getAttribute('data-pending')).toBe('true')
+    await act(async () => { await vi.advanceTimersByTimeAsync(400) })
+    expect(second.getAttribute('data-pending')).toBeNull()
+  })
+
+  it('copies a multi-fragment diff with its fragment separator', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    render(<DiffBlock diffs={[distantChange]} maxLines={100} />)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '复制' })) })
+    const text = String(writeText.mock.calls[0]?.[0] ?? '')
+    expect(text.split('\n').filter(line => line === '⋯')).toHaveLength(1)
+    expect(text.startsWith('items.txt\n')).toBe(true)
   })
 })

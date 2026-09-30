@@ -36,7 +36,7 @@ export function markdownLabels(t: T): MarkdownLabels {
 /**
  * Build localized diff-card chrome labels.
  * @param t - Conversation locale seat.
- * @returns Diff-card chrome labels.
+ * @returns Diff-card chrome and review-action labels.
  */
 export function diffBlockLabels(t: T): DiffBlockLabels {
   return {
@@ -47,6 +47,14 @@ export function diffBlockLabels(t: T): DiffBlockLabels {
     expandAria: count => t('diff.expandAria', { count }),
     collapse: t('collapse'),
     expand: count => t('diff.expandRest', { count }),
+    review: {
+      accept: t('diff.accept'),
+      reject: t('diff.reject'),
+      acceptChange: path => t('diff.acceptChangeAria', { path }),
+      rejectChange: path => t('diff.rejectChangeAria', { path }),
+      acceptFragment: (path, fragment, total) => t('diff.acceptFragmentAria', { path, fragment, total }),
+      rejectFragment: (path, fragment, total) => t('diff.rejectFragmentAria', { path, fragment, total }),
+    },
   }
 }
 

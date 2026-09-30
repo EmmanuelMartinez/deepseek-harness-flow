@@ -78,3 +78,131 @@
 .expand:hover {
   color: var(--dsw-alias-label-secondary);
 }
+
+/* Review surfaces. Everything below is scoped to `data-review='true'` so a
+   read-only diff (a tool card, a transcript) keeps its plain text layout, and
+   the header's accent bar replaces 3px of its left padding to stay aligned. */
+.block[data-review='true'] .header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 12px;
+  padding-left: 19px;
+  border-left: 3px solid transparent;
+}
+
+.block[data-review='true'] .headerLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+.headerLabel {
+  min-width: 0;
+}
+
+/* A change or fragment whose lines are additions or deletions carries the same
+   green/red language as the diff body; `mixed` splits its bar between both. */
+.block[data-review='true'] .header[data-tone='add'] {
+  border-left-color: var(--dsw-alias-state-success-primary);
+}
+
+.block[data-review='true'] .header[data-tone='del'] {
+  border-left-color: var(--dsw-alias-state-error-primary);
+}
+
+.block[data-review='true'] .header[data-tone='mixed'] {
+  background-image: linear-gradient(
+    180deg,
+    var(--dsw-alias-state-success-primary) 50%,
+    var(--dsw-alias-state-error-primary) 50%
+  );
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 3px 100%;
+}
+
+.review {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.reviewAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font: 11px/18px var(--dsw-font-family);
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 80ms ease;
+}
+
+.reviewAction:active {
+  transform: scale(0.96);
+}
+
+.reviewAction:focus-visible {
+  outline: 1px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+.accept {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.accept:hover {
+  border-color: var(--dsw-alias-state-success-secondary);
+  background: var(--dsw-alias-code-diff-added);
+}
+
+.reject {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.reject:hover {
+  border-color: var(--dsw-alias-state-error-secondary);
+  background: var(--dsw-alias-code-diff-deleted);
+}
+
+/* The clicked action keeps a settled flash until its timer expires or a newer
+   click replaces it, so a hunk review reads as a decision, not a dead click. */
+.reviewAction[data-pending='true'] {
+  animation: reviewSettle 200ms ease-out;
+}
+
+.accept[data-pending='true'] {
+  border-color: var(--dsw-alias-state-success-primary);
+  background: var(--dsw-alias-code-diff-added);
+}
+
+.reject[data-pending='true'] {
+  border-color: var(--dsw-alias-state-error-primary);
+  background: var(--dsw-alias-code-diff-deleted);
+}
+
+@keyframes reviewSettle {
+  from {
+    transform: scale(0.94);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reviewAction {
+    transition: none;
+  }
+
+  .reviewAction[data-pending='true'] {
+    animation: none;
+  }
+}

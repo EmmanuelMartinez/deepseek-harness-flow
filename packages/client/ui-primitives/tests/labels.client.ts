@@ -18,6 +18,13 @@ export const diffBlockLabels: DiffBlockLabels = {
   copy: '复制', copied: '复制成功', collapseAria: '收起差异',
   expandAria: hidden => `展开其余 ${hidden} 行差异`,
   collapse: '收起', expand: hidden => `… 其余 ${hidden} 行`,
+  review: {
+    accept: '接受', reject: '拒绝',
+    acceptChange: path => `接受 ${path} 的全部更改`,
+    rejectChange: path => `拒绝 ${path} 的全部更改`,
+    acceptFragment: (path, fragment, total) => `接受 ${path} 第 ${fragment} / ${total} 段更改`,
+    rejectFragment: (path, fragment, total) => `拒绝 ${path} 第 ${fragment} / ${total} 段更改`,
+  },
 }
 
 export const readBlockLabels: ReadBlockLabels = {
