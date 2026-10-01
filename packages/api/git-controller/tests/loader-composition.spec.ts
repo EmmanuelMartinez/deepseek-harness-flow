@@ -16,6 +16,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
+import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import * as GitControllerPlugin from '../src/index.ts'
@@ -75,6 +76,7 @@ describe('real Loader composition', () => {
     git(repo, 'commit', '-qm', 'init')
 
     await writeFile(join(root, 'cordis.yml'), [
+      "- name: '@deepseek-ai/dsh-fs-local'",
       "- name: '@deepseek-ai/dsh-subprocess-local'",
       "- name: 'test-workspace-registry'",
       "- name: '@deepseek-ai/dsh-api-git-controller'",
@@ -85,6 +87,7 @@ describe('real Loader composition', () => {
     await context.plugin(Loader)
     context.loader.builtins.include = Include
     const modules = new Map<string, unknown>([
+      ['@deepseek-ai/dsh-fs-local', LocalFileSystem],
       ['@deepseek-ai/dsh-subprocess-local', LocalSubprocessRuntime],
       ['test-workspace-registry', workspaceRegistry],
       ['@deepseek-ai/dsh-api-git-controller', GitControllerPlugin],

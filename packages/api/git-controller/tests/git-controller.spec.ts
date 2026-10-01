@@ -14,6 +14,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { SubprocessExecutableNotFoundError } from '@deepseek-ai/dsh-subprocess'
+import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { remoteErrorOf, type RemoteFailure } from '@deepseek-ai/dsh-typert-protocol'
 import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
@@ -65,6 +66,7 @@ async function seeded(config: Config = CONFIG): Promise<Bench> {
   git(repo, 'tag', '-a', 'v1', '-m', 'release one')
   const ctx = new Context()
   await ctx.plugin(LocalSubprocessRuntime).await()
+  await ctx.plugin(LocalFileSystem, { cwd: repo }).await()
   const workspaces = new Map<WorkspaceId, { readonly path: string }>()
   ctx.provide('workspaceRegistry', { get: (id: WorkspaceId) => workspaces.get(id) } as never)
   const controller = new GitController(ctx, config)

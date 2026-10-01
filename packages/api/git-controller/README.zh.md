@@ -35,6 +35,7 @@ kind: "package-reference"
 | `log` | `GitLogPage` | `--date-order` 下的一页历史，每个提交携带其父提交与指向它的引用短名。 |
 | `commit` | `GitCommitDetailView` | 单个提交的消息正文与改动文件，各自带上类型、行数与二进制标记。 |
 | `diff` | `GitFileDiffView` | 单个文件在工作树与索引、索引与 HEAD，或某个提交与其父提交之间的对比。 |
+| `watch` | `GitWatchFrame` 流 | 仓库自身目录开始被观察后先给出 `ready`，随后每次失效给出 `change`——提交、切换分支、写入索引。没有仓库的 Workspace 直接结束该流，因此调用方可以在尚不确定是否存在仓库时先启动它。 |
 
 ### 请求与其边界
 

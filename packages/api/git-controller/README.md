@@ -35,6 +35,7 @@ Mount the package beside `dsh-subprocess` and the Workspace registry; the Web bu
 | `log` | `GitLogPage` | One page of history in `--date-order`, each commit carrying its parents and the short names of the refs that point at it. |
 | `commit` | `GitCommitDetailView` | One commit's message body and changed files, each with its kind, line counts, and binary flag. |
 | `diff` | `GitFileDiffView` | One file compared between the working tree and the index, the index and HEAD, or a commit and its parent. |
+| `watch` | `GitWatchFrame` stream | `ready` once the repository's own directory is watched, then `change` for each invalidation — a commit, a checkout, an index write. A Workspace without a repository ends the stream, so a caller may start it before it knows one exists. |
 
 ### Requests and their bounds
 

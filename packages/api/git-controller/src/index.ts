@@ -15,9 +15,10 @@
  * @module @deepseek-ai/dsh-api-git-controller
  */
 
-import { basename } from 'node:path'
+import { basename, join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
+import type {} from '@deepseek-ai/dsh-fs'
 import type {} from '@deepseek-ai/dsh-subprocess'
 import type {} from '@deepseek-ai/dsh-workspace'
 import { assertNever } from '@deepseek-ai/dsh-util-values'
@@ -25,6 +26,7 @@ import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import { GitRunner, parseNumstat, resolveGitExecutable } from '@deepseek-ai/dsh-git-command'
 import type { GitRunResult, GitUnavailableReason } from '@deepseek-ai/dsh-git-command'
+import type { GitWatchFrame } from './types.ts'
 import {
   parseBranchFacts,
   parseCommitDetail,
@@ -144,9 +146,46 @@ function requireObjectId(oid: string): string {
   return oid
 }
 
+/**
+ * A one-slot async wakeup: pushes coalesce while nobody is waiting, and a
+ * waiter resolves on the next push or rejects on abort.
+ * @returns the queue's one operation: wait for the next push.
+ */
+function createWakeQueue(): { push(): void; next(signal: AbortSignal): Promise<void> } {
+  let waiting: (() => void) | undefined
+  let pending = false
+  return {
+    push: () => {
+      if (waiting === undefined) {
+        pending = true
+        return
+      }
+      const resolve = waiting
+      waiting = undefined
+      resolve()
+    },
+    next: signal => new Promise<void>((resolve, reject) => {
+      if (pending) {
+        pending = false
+        resolve()
+        return
+      }
+      const abort = (): void => {
+        waiting = undefined
+        reject(signal.reason instanceof Error ? signal.reason : new Error('aborted'))
+      }
+      signal.addEventListener('abort', abort, { once: true })
+      waiting = () => {
+        signal.removeEventListener('abort', abort)
+        resolve()
+      }
+    }),
+  }
+}
+
 /** Host Remote owner of the `git` namespace. */
 export class GitController extends TypertRemoteService {
-  static inject = ['subprocess', 'workspaceRegistry']
+  static inject = ['fs', 'subprocess', 'workspaceRegistry']
 
   static Config: z<Config> = z.object({
     timeoutMs: z.number().step(1).min(1).default(30_000),
@@ -403,6 +442,40 @@ export class GitController extends TypertRemoteService {
   }
 
   /** Locate the working tree containing a Workspace, or undefined when it is outside every repository. */
+  /**
+   * Watch the repository's own directory for the changes that make a read
+   * stale: a commit, a checkout, an index write. A Workspace without a
+   * repository ends the stream instead of failing, so a caller may start it
+   * before it knows one exists.
+   * @param workspaceId - registered Workspace to watch.
+   * @param signal - generation cancellation.
+   * @returns `ready` once the watch is active, then one frame per invalidation.
+   */
+  @Remote({ mode: 'stream' })
+  async *watch(workspaceId: WorkspaceId, signal: AbortSignal): AsyncIterable<GitWatchFrame> {
+    const located = await this.locate(workspaceId, signal).catch(() => undefined)
+    if (located === undefined) return
+    const workspace = await this.ctx.fs.resolve(this.workspacePath(workspaceId), { signal })
+    const directory = await this.ctx.fs.resolve(join(located.root, '.git'), { signal })
+    const watched = (await this.ctx.fs.stat(directory, signal))?.type === 'directory'
+      && this.ctx.fs.contains(workspace, directory)
+    if (!watched) return
+    const wake = createWakeQueue()
+    const unwatch = await this.ctx.fs.watch(directory, (error) => {
+      if (error === undefined) wake.push()
+    }, signal).catch(() => undefined)
+    if (unwatch === undefined) return
+    yield { kind: 'ready' }
+    try {
+      while (!signal.aborted) {
+        await wake.next(signal)
+        yield { kind: 'change' }
+      }
+    } finally {
+      await unwatch()
+    }
+  }
+
   private async locate(workspaceId: WorkspaceId, signal: AbortSignal): Promise<LocatedRepository | undefined> {
     const runner = await this.requireRunner()
     const result = await runner.run(['rev-parse', '--show-toplevel'], { cwd: this.workspacePath(workspaceId), signal })

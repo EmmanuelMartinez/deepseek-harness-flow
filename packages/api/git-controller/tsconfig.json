@@ -18,6 +18,9 @@
       "path": "../../git/git-command"
     },
     {
+      "path": "../../fs/fs"
+    },
+    {
       "path": "../../subprocess/subprocess"
     },
     {

@@ -246,6 +246,16 @@ export interface GitFileDiffView {
   readonly truncated: boolean
 }
 
+/**
+ * One frame of the repository watch: `ready` once the watch is active, then
+ * `change` for each coalesced invalidation of the repository's own directory.
+ * The stream ends when the caller aborts, or immediately when the Workspace
+ * holds no repository to watch.
+ */
+export type GitWatchFrame =
+  | { readonly kind: 'ready' }
+  | { readonly kind: 'change' }
+
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface RemoteErrorDetailsMap {
     /** No usable git executable is available to this Host. */

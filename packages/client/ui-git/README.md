@@ -34,7 +34,7 @@ Mount the package in a Client composition that carries the sidebar, the frame's 
 | History | The history page in `--date-order` with one graph lane per branch line, the subject, the commit id, the author, the date, and the refs that point at the commit. Selecting a row reads that commit. |
 | Commit | The selected commit's message body, author, parents, refs, and changed files with their line counts. |
 
-Every read is per Workspace, and the panel shows one at a time. Selecting a Workspace in the header replaces the whole panel; Refresh re-reads the current one and keeps the selected commit.
+Every read is per Workspace, and the panel shows one at a time. Selecting a Workspace in the header replaces the whole panel; Refresh re-reads the current one and keeps the selected commit. The panel is live: it follows that Workspace's `git.watch` stream, so a commit, a checkout or an index write made anywhere re-reads the graph and the working tree without a manual Refresh. Events coalesce over a short quiet period, because one commit writes many files. The changed-file badge on the frame's rail follows the same stream while the panel is open, and reads on its own when the panel is closed.
 
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
