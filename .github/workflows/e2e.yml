@@ -1,3 +1,4 @@
+if: env.DEEPSEEK_API_KEY_EXTERNAL != ''
 name: E2E (real DeepSeek API)
 
 # Real-API end-to-end suite (`pnpm run test:e2e`). Unlike ci.yml this job
