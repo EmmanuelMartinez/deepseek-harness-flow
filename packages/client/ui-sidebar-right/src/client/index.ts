@@ -186,9 +186,10 @@ export function apply(ctx: ClientContext): void {
       },
     }
     const injected: Omit<SidebarRightInjected, 'keyedHooks' | 'occurrence' | 'closeTab' | 'measureRoom'> = {
-      syncPresentation({ shown, track, fullscreen }) {
+      syncPresentation({ shown, track, fullscreen, kind }) {
         if (shown) layout.openRightbar(track, fullscreen)
         else layout.closeRightbar()
+        layout.setSurfaceKind(shown ? kind : undefined)
       },
       reportAutoFullscreen: (value) => { autoFullscreen = value },
       splitPane: (paneId) => { controller.split(paneId) },

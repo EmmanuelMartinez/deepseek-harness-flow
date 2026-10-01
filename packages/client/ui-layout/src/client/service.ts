@@ -19,6 +19,12 @@ export type MainPanelId = Branded<'MainPanelId'>
 export interface PanelInfo {
   /** Selected global panel; null displays the current Conversation. */
   readonly activePanelId: MainPanelId | null
+  /**
+   * The right column's front surface kind while it shows its panel, or
+   * undefined while it is collapsed or carries none. Frame chrome that offers
+   * those surfaces reads it to mark the one in front.
+   */
+  readonly surfaceKind?: string | undefined
 }
 
 /** The layout store's bound action set (framework-baked, draft params peeled). */
@@ -41,6 +47,12 @@ export interface ILayout {
   beginNavigation(): AbortSignal
   /** Toggle the sidebar panel (closed ⟷ contract default width). */
   toggleSidebar(): void
+  /**
+   * Record the right column's front surface kind, for chrome that offers those
+   * surfaces and must mark the one in front.
+   * @param kind - the active tab's kind, or undefined while no panel is shown.
+   */
+  setSurfaceKind(kind: string | undefined): void
   /**
    * Report the right panel's presentation without changing its expanded state.
    * @param track - whether the normal panel width reserves a grid track,
@@ -67,6 +79,14 @@ export class LayoutController implements ILayout {
     private readonly hasMainPanel: (id: MainPanelId) => boolean,
     readonly panelInfo: HostObservable<PanelInfo>,
   ) {}
+
+  /**
+   * Record the right column's front surface kind.
+   * @param kind - the active tab's kind, or undefined while no panel is shown.
+   */
+  setSurfaceKind(kind: string | undefined): void {
+    this.panels.setSurfaceKind(kind)
+  }
 
   /** Select a global panel or return to the Conversation. */
   selectPanel(panelId: MainPanelId | null): void {

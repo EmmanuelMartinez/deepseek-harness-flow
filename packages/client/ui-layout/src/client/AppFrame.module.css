@@ -74,6 +74,59 @@
   overflow: hidden;
 }
 
+/* The right rail: a fixed column of tool icons at the frame's right edge. It is
+   frame chrome, not a column's content, so it survives the right column's
+   collapse and keeps a tool one press away. */
+.railCol {
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* The rail scrolls on the elevated sidebar fill, so it rebinds the pair. */
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  background: var(--dsw-specific-sidebar-fill);
+  border-left: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.railButton {
+  position: relative; /* anchors a glyph's own badge */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-md);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.railButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* The tool in front reads in the accent the composer's send and the selected
+   Session already use, so which one is showing is legible at a glance. */
+.railButtonActive {
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 14%, transparent);
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.railButton:focus-visible {
+  outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
 /* macOS desktop: the frame goes transparent so window vibrancy reaches the
    sidebar column, which keeps only a translucent tint; the centre paints the
    base background itself to stay opaque. The sidebar/centre separator moves

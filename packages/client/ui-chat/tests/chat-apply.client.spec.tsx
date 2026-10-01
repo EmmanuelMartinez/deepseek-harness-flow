@@ -46,7 +46,7 @@ async function bench() {
       ? chatSettings.scope
       : stubConfigForm().scope,
   } as never)
-  runtime.ctx.provide('layout', { openRightbar: vi.fn(), closeRightbar: vi.fn() } as never)
+  runtime.ctx.provide('layout', { openRightbar: vi.fn(), closeRightbar: vi.fn(), setSurfaceKind: vi.fn() } as never)
   runtime.ctx.provide('sidebarRight', { openResource: vi.fn(), openTab: vi.fn() } as never)
   runtime.ctx.provide('sidebarRightTabs', {
     register: vi.fn(() => () => {}),

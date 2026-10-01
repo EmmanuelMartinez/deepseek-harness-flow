@@ -5,7 +5,7 @@
  */
 
 /** Resolved widths for one frame. */
-export interface Columns { sidebar: number; center: number; rightbar: number }
+export interface Columns { sidebar: number; center: number; rightbar: number; rail: number }
 
 /** Center width protected while the normal right column is open. */
 export const CENTER_MIN = 400
@@ -27,6 +27,11 @@ export const RIGHTBAR_MIN = 300
 export const RIGHTBAR_MAX_RATIO = 0.7
 /** First-open right panel preference as a fraction of the frame. */
 export const RIGHTBAR_DEFAULT_RATIO = 0.45
+/**
+ * The right rail: a fixed column of tool icons at the frame's right edge, always
+ * present so a tool remains one press away while its panel is closed.
+ */
+export const RAIL_WIDTH = 48
 
 /**
  * Clamp a panel width into its contract range.
@@ -51,9 +56,10 @@ export function clampWidth(px: number, min: number, max: number): number {
  */
 export function computeColumns(viewport: number, sidebar: number, rightbar: number, collapsedWidth = SIDEBAR_COLLAPSED): Columns {
   const s = sidebar === 0 ? collapsedWidth : clampWidth(sidebar, SIDEBAR_MIN, SIDEBAR_MAX)
-  const available = viewport - s - CENTER_MIN
+  // The rail is frame chrome of its own, paid for before either panel bids.
+  const available = viewport - s - CENTER_MIN - RAIL_WIDTH
   const r = rightbar === 0 || available < RIGHTBAR_MIN
     ? 0
     : Math.min(available, clampWidth(rightbar, RIGHTBAR_MIN, viewport * RIGHTBAR_MAX_RATIO))
-  return { sidebar: s, center: Math.max(0, viewport - s - r), rightbar: r }
+  return { sidebar: s, center: Math.max(0, viewport - s - r - RAIL_WIDTH), rightbar: r, rail: RAIL_WIDTH }
 }

@@ -1,6 +1,6 @@
 /** Numstat parsing. */
 import { describe, expect, it } from 'vitest'
-import { parseNumstat } from '../src/numstat.ts'
+import { parseNumstat } from '../src/porcelain.ts'
 
 describe('parseNumstat', () => {
   it('reads plain, binary, and rename records', () => {

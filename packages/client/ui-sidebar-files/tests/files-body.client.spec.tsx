@@ -158,6 +158,23 @@ describe('FilesBody', () => {
     expect(other.querySelector('[aria-disabled="true"]')?.getAttribute('title')).toBe(zh['entry.other'])
   })
 
+  it('offers a file to the Editor first, and leaves the preview to the other rows', async () => {
+    const openInEditor = vi.fn((absolutePath: string) => absolutePath.endsWith('README.md'))
+    const { view, script, tabActions } = mountBody(ROOT, undefined, openInEditor)
+    await act(() => script.watches.ready(ROOT))
+    await act(() => script.settle({ ok: true, value: ROOT_LEVEL }))
+    fireEvent.click(view.container.querySelector(`[data-files-path="${ROOT}/README.md"] > button`)!)
+    expect(openInEditor).toHaveBeenCalledWith(`${ROOT}/README.md`)
+    expect(tabActions.openResource).not.toHaveBeenCalled()
+    fireEvent.click(view.container.querySelector(`[data-files-path="${ROOT}/src"] > button`)!)
+    await act(() => script.watches.ready(`${ROOT}/src`))
+    const nested = view.container.querySelector(`[data-files-path="${ROOT}/src/a.ts"] > button`)
+    if (nested === null) return
+    fireEvent.click(nested)
+    expect(openInEditor).toHaveBeenCalledWith(`${ROOT}/src/a.ts`)
+    expect(tabActions.openResource).toHaveBeenCalledWith(fileAddressFor(SESSION, ROOT, `${ROOT}/src/a.ts`))
+  })
+
   it('marks a cut listing and an empty one', async () => {
     const { view, script } = mountBody()
     await act(() => script.watches.ready(ROOT))

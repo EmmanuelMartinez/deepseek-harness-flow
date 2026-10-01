@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/git/README.md
+/:
+  en: 59a0ca84ad08721e
+  zh: 23a6c3e3a18ef1f3
+/git-git-execution-family:
+  en: ef0c2ad2a9277a73
+  zh: 1f6c9c203ef733b4
+/git-git-execution-family/summary:
+  en: 80a0a63215d69bc6
+  zh: e54425216a7ae281
+/git-git-execution-family/table-of-contents:
+  en: 1eb35b015a6c423f
+  zh: 1eb35b015a6c423f
+/git-git-execution-family/packages:
+  en: 37e6c6c57dc355c3
+  zh: 507849bd6562da77
+/git-git-execution-family/related-documentation:
+  en: 101d02017b047667
+  zh: b9bb819b50263ccb
+/git-git-execution-family/dev-note:
+  en: 3a019ad52acb59f4
+  zh: a790966c7db0256b

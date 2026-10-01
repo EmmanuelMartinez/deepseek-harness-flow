@@ -1,0 +1,535 @@
+/*
+ * Git page: one repository's changes above its history graph, with the selected
+ * commit's detail beside them.
+ *
+ * Only semantic aliases from ui-theme are used, so light and dark follow the
+ * active theme. The graph's five line colours map to state tokens: a line is
+ * meaningful state, so it takes meaningful colour rather than a private palette.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* ---- head ---- */
+
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 12px 0 16px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+:global([data-platform='darwin']) .head {
+  height: calc(44px + var(--dsh-frame-top-clearance, 0px));
+  padding-top: var(--dsh-frame-top-clearance, 0px);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.branch {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upstream,
+.repoName {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repoName::before {
+  margin-right: 6px;
+  color: var(--dsw-alias-border-l1);
+  content: '·';
+}
+
+.mono {
+  font-family: var(--dsw-font-family-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.workspaces {
+  display: flex;
+  gap: 2px;
+  max-width: 40vw;
+  overflow-x: auto;
+}
+
+.workspaceButton {
+  padding: 3px 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.workspaceButton:hover {
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.workspaceButton[data-active='true'] {
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+}
+
+.iconButton:focus-visible,
+.workspaceButton:focus-visible,
+.sectionToggle:focus-visible,
+.commitButton:focus-visible {
+  outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+/* ---- body ---- */
+
+.body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.body[data-detail='true'] {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+}
+
+.main {
+  min-width: 0;
+  overflow: auto;
+  padding: 4px 0 32px;
+}
+
+/* ---- changed paths ---- */
+
+.sectionToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sectionToggle:hover {
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.changes {
+  padding-bottom: 6px;
+}
+
+.group + .group {
+  margin-top: 2px;
+}
+
+.groupLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.count {
+  padding: 0 5px;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-2);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.files {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fileRow {
+  min-width: 0;
+}
+
+.fileButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fileButton:hover {
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.fileButton:focus-visible {
+  outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+.letter {
+  flex: none;
+  width: 12px;
+  font-family: var(--dsw-font-family-mono, ui-monospace, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.letter[data-kind='modified'] { color: var(--dsw-alias-state-warn-primary); }
+.letter[data-kind='added'],
+.letter[data-kind='untracked'] { color: var(--dsw-alias-state-success-primary); }
+.letter[data-kind='deleted'],
+.letter[data-kind='unmerged'] { color: var(--dsw-alias-state-error-primary); }
+.letter[data-kind='renamed'],
+.letter[data-kind='copied'],
+.letter[data-kind='typechange'] { color: var(--dsw-alias-state-business-primary); }
+
+.fileText {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* The directory gives way; the file name never truncates. */
+.path {
+  display: flex;
+  min-width: 0;
+}
+
+.pathDir {
+  overflow: hidden;
+  color: var(--dsw-alias-label-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pathName {
+  flex: none;
+}
+
+.renamedFrom {
+  flex: none;
+  font-size: 11px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.renamedFrom::before {
+  content: '← ';
+}
+
+.counts {
+  flex: none;
+  margin-left: auto;
+  font-family: var(--dsw-font-family-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-label-secondary);
+}
+
+/* ---- history ---- */
+
+.graph {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.commitRow {
+  min-width: 0;
+}
+
+.commitButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 28px;
+  padding: 0 16px 0 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.commitButton:hover {
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.commitRow[data-selected='true'] .commitButton {
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.gutter {
+  display: block;
+  flex: none;
+}
+
+.rail {
+  stroke-width: 2;
+  opacity: 0.5;
+}
+
+.dot {
+  stroke-width: 2;
+  fill: var(--dsw-alias-bg-base);
+}
+
+.rail[data-color='0'],
+.dot[data-color='0'] { stroke: var(--dsw-alias-state-business-primary); }
+.rail[data-color='1'],
+.dot[data-color='1'] { stroke: var(--dsw-alias-state-success-primary); }
+.rail[data-color='2'],
+.dot[data-color='2'] { stroke: var(--dsw-alias-state-warn-primary); }
+.rail[data-color='3'],
+.dot[data-color='3'] { stroke: var(--dsw-alias-state-error-primary); }
+.rail[data-color='4'],
+.dot[data-color='4'] { stroke: var(--dsw-alias-state-idle-primary); }
+
+.dot[data-color='0'] { fill: var(--dsw-alias-state-business-primary); }
+.commitRow[data-selected='true'] .dot { fill: var(--dsw-alias-bg-layer-2); }
+
+.subject {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pills {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.pill {
+  padding: 0 6px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-layer-1);
+  font-size: 11px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.rowMeta {
+  flex: none;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-label-secondary);
+}
+
+@media (max-width: 960px) {
+  .rowMeta {
+    display: none;
+  }
+}
+
+/* ---- detail ---- */
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  overflow: auto;
+  /* An elevated sheet rebinds the scrollbar pair for its own surface. */
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  padding: 12px 16px 32px;
+  border-left: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.detailHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.oid {
+  font-family: var(--dsw-font-family-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.detailSubject {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.body {
+  margin: 0;
+  font-family: var(--dsw-font-family-mono, ui-monospace, monospace);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.facts dt {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---- notices ---- */
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+  padding: 56px 24px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.noticeDetail {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  margin: 0;
+  padding: 2px 16px;
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.groupLabel .note,
+.sectionToggle .note {
+  padding: 0;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ---- rail glyph ---- */
+
+.railIcon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.railBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  box-sizing: border-box;
+  min-width: 11px;
+  padding: 0 2px;
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-state-business-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+  font-size: 7px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 10px;
+  text-align: center;
+}

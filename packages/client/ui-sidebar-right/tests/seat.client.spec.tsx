@@ -71,7 +71,7 @@ function transition(property = 'transform') {
 async function mountSeat(viewportWidth = 1440, canShow = true, entryCount = 0, opener = false, keepMounted = false) {
   const runtime = await SlotTestRuntime.create()
   runtimes.push(runtime)
-  const frame = { openRightbar: vi.fn(), closeRightbar: vi.fn(), panelInfo: runtime.panelInfo }
+  const frame = { openRightbar: vi.fn(), closeRightbar: vi.fn(), setSurfaceKind: vi.fn(), panelInfo: runtime.panelInfo }
   const pin = vi.fn<(address: string, signal: AbortSignal) => void>()
   runtime.ctx.provide('layout', frame as never)
   runtime.ctx.provide('resources', { pin } as never)
@@ -195,6 +195,25 @@ describe('RightbarSeat presentation', () => {
     act(() => { h.selectSession(SESSION) })
     expect(element(h.view.container, `[data-tab-body="${tab.id}"]`)).toBe(body)
     expect(h.bodies.get(tab.id)?.tab.signal.aborted).toBe(false)
+  })
+
+  it('opens a surface kind on one press and closes the column on the next', async () => {
+    const h = await mountSeat()
+    act(() => { h.registerPage('files') })
+    act(() => { expect(h.controller.toggleSurface('files')).toBe(true) })
+    expect(h.controller.isExpanded()).toBe(true)
+    expect(Object.values(h.layout().tabs).filter(tab => tab.kind === 'files')).toHaveLength(1)
+    // The frame's chrome reads the front kind through the layout service, so the
+    // column reports it whenever the tab in front or the expansion moves.
+    await vi.waitFor(() => { expect(h.frame.setSurfaceKind).toHaveBeenCalledWith('files') })
+    // The second press puts the column away and leaves the tab where it was, so
+    // the next press brings the same surface back.
+    act(() => { expect(h.controller.toggleSurface('files')).toBe(true) })
+    expect(h.controller.isExpanded()).toBe(false)
+    expect(Object.values(h.layout().tabs).filter(tab => tab.kind === 'files')).toHaveLength(1)
+    // A kind nothing registered is declined rather than thrown, so a caller can
+    // try another destination for the same press.
+    expect(h.controller.toggleSurface('nothing')).toBe(false)
   })
 
   it('releases the departing editable selection while retaining its draft', async () => {

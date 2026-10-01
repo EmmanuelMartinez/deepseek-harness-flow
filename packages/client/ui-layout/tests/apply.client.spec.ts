@@ -100,10 +100,41 @@ describe('ui-layout client apply', () => {
     const fiber = ctx.plugin({ inject: [...inject], apply })
     await fiber.await()
     const entry = slots.entries('root')[0]!
-    expect(entry.inject).toBeUndefined()
+    const injectFace = entry.inject as undefined | (() => {
+      hooks: { railEntries: { getSnapshot: () => readonly unknown[] } }
+      pressEntry: (id: string, active: boolean) => void
+    })
+    if (injectFace === undefined) throw new Error('the frame carries no injected face')
+    const face = injectFace()
+    // The rail starts empty and follows registrations; a press selects the panel
+    // that entry opens, and a second press on the active one clears it.
+    expect(face.hooks.railEntries.getSnapshot()).toEqual([])
+    const railPanel = 'rail-a' as MainPanelId
+    const disposeRailPanel = slots.register({ name: 'main', key: railPanel }, () => null)
+    const disposeRail = slots.register({ name: 'rightrail', id: railPanel, order: 3, label: 'Rail A' }, () => null)
+    // Entry notifications are microtask-batched.
+    await vi.waitFor(() => {
+      expect(face.hooks.railEntries.getSnapshot()).toEqual([{ id: railPanel, order: 3, label: 'Rail A' }])
+    })
+    face.pressEntry(railPanel, false)
+    face.pressEntry(railPanel, true)
+    disposeRail()
+    await vi.waitFor(() => { expect(face.hooks.railEntries.getSnapshot()).toEqual([]) })
     const handle = entry.store as ReturnType<typeof createLayoutStore>
     const instance = handle.create()
     expect(handle.create()).toBe(instance)
+    face.pressEntry(railPanel, false)
+    expect(instance.getSnapshot().panelInfo.activePanelId).toBe(railPanel)
+    face.pressEntry(railPanel, true)
+    expect(instance.getSnapshot().panelInfo.activePanelId).toBeNull()
+    // A right-column surface takes its own press, so the frame leaves the main
+    // selection alone even when that key is also a registered panel.
+    const toggleSurface = vi.fn(() => true)
+    ctx.provide('sidebarRight', { toggleSurface } as never)
+    face.pressEntry(railPanel, false)
+    expect(toggleSurface).toHaveBeenCalledWith(railPanel)
+    expect(instance.getSnapshot().panelInfo.activePanelId).toBeNull()
+    disposeRailPanel()
     const layout = ctx.get('layout') as LayoutController
     expect(() => { layout.selectPanel('missing' as MainPanelId) }).toThrow('main panel "missing" is not registered')
     layout.toggleSidebar()

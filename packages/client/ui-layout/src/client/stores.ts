@@ -17,6 +17,8 @@ type LayoutState = {
   panelInfo: {
     /** Null selects the Conversation; global panels keep the current Session intact. */
     activePanelId: MainPanelId | null
+    /** The right column's front surface kind while it shows its panel. */
+    surfaceKind?: string | undefined
   }
   layoutInfo: LayoutInfo
 }
@@ -57,6 +59,7 @@ type LayoutInfo = {
  */
 type LayoutActions = {
   selectPanel: (draft: LayoutState, panelId: MainPanelId | null) => void
+  setSurfaceKind: (draft: LayoutState, kind: string | undefined) => void
   retainMainPanels: (draft: LayoutState, panelIds: readonly string[]) => void
   setSidebar: (draft: LayoutState, px: number) => void
   toggleSidebar: (draft: LayoutState) => void
@@ -93,6 +96,9 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
     actions: {
       selectPanel: (d, panelId: MainPanelId | null) => {
         d.panelInfo.activePanelId = panelId
+      },
+      setSurfaceKind: (d, kind: string | undefined) => {
+        d.panelInfo = { ...d.panelInfo, surfaceKind: kind }
       },
       retainMainPanels: (d, panelIds: readonly string[]) => {
         if (d.panelInfo.activePanelId !== null && !panelIds.includes(d.panelInfo.activePanelId)) {

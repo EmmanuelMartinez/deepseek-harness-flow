@@ -59,7 +59,7 @@ async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true,
     developerTools: { enabled: createSnapshotStore(true) },
     get: (id: string) => id === CHAT_SETTINGS_NAMESPACE ? chatSettings.scope : stubConfigForm().scope,
   } as never)
-  const layout = { closeRightbar: vi.fn(), openRightbar: vi.fn() }
+  const layout = { closeRightbar: vi.fn(), openRightbar: vi.fn(), setSurfaceKind: vi.fn() }
   runtime.ctx.provide('layout', layout as never)
   const sidebarRight = {
     openResource: vi.fn<(address: string) => void>(),

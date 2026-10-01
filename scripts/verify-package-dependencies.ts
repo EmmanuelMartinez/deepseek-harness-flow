@@ -344,6 +344,61 @@ function generatedHostSources(root: string, packages: readonly WorkspacePackageM
   return sources
 }
 
+/**
+ * Third-party specifiers one generated Host module imports that its manifest
+ * leaves undeclared. The generated module has no source entry, so source-driven
+ * edges never see them: only the artifact names them.
+ * @param pkg - release package declaring the generated Host export.
+ * @param generated - generated module text for that package.
+ * @param workspaceNames - workspace package names, whose versions the policy owns separately.
+ * @returns one message per undeclared specifier, name-sorted.
+ */
+export function collectGeneratedArtifactDependencyViolations(
+  pkg: WorkspacePackageManifest,
+  generated: string,
+  workspaceNames: ReadonlySet<string>,
+): string[] {
+  const imported = new Set<string>()
+  for (const use of collectRuntimeSourceExportUses(`${normalizePath(pkg.dir)}/lib/typert.host.js`, generated)) {
+    const name = packageNameOf(use.specifier)
+    if (name === undefined || name === CORDIS || workspaceNames.has(name)) continue
+    imported.add(name)
+  }
+  return [...imported].sort()
+    .filter(name => section(pkg.manifest, 'dependencies')[name] === undefined)
+    .map(name => `${pkg.manifestPath}: the generated ./typert module imports ${name}; declare it in dependencies`)
+}
+
+/**
+ * Check the generated Host artifacts of release packages the dependency policy
+ * leaves unmanaged. A Host-only plugin declares no `dsh.client`, so face
+ * discovery never classifies it, and an undeclared artifact import then surfaces
+ * only when the plugin fails to load.
+ * @param root - repository root.
+ * @param packages - release packages to inspect.
+ * @param workspaceNames - workspace package names.
+ * @param managed - package names the dependency policy already classifies.
+ * @returns violations, sorted.
+ */
+export function collectUnmanagedGeneratedHostViolations(
+  root: string,
+  packages: readonly WorkspacePackageManifest[],
+  workspaceNames: ReadonlySet<string>,
+  managed: ReadonlySet<string>,
+): string[] {
+  const publishers = packages.filter(pkg => hasGeneratedHostExport(pkg) && !managed.has(pkg.name))
+  if (publishers.length === 0) return []
+  const sources = generatedHostSources(root, publishers)
+  const violations: string[] = []
+  for (const pkg of publishers) {
+    const generated = sources.get(pkg.name)
+    // generatedHostSources reports a publisher whose artifact the generator omits.
+    if (generated === undefined) continue
+    violations.push(...collectGeneratedArtifactDependencyViolations(pkg, generated, workspaceNames))
+  }
+  return violations.sort()
+}
+
 /** Source-backed Node exports; generated Typert artifacts have no standalone source entry. */
 function hostSourceEntries(root: string, pkg: WorkspacePackageManifest): string[] {
   const entry = resolve(root, pkg.dir, 'src/index.ts')
@@ -867,7 +922,15 @@ function main(): void {
       state = readPackageDependencyState(root)
     }
   }
-  const violations = collectPackageDependencyViolations(state)
+  const violations = [
+    ...collectPackageDependencyViolations(state),
+    ...collectUnmanagedGeneratedHostViolations(
+      root,
+      state.packages,
+      state.workspaceNames,
+      new Set(state.facts.flatMap(fact => fact.manifest.name === undefined ? [] : [fact.manifest.name])),
+    ),
+  ].sort()
   if (violations.length > 0) {
     console.error(`${GATE}: ${String(violations.length)} violation(s):`)
     for (const violation of violations) console.error(`  ${violation}`)

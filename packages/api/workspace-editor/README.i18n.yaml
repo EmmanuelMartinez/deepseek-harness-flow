@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/api/workspace-editor/README.md
+/:
+  en: 2e76f834aef0fe30
+  zh: a4d46fe72a21b698
+/deepseek-ai-dsh-api-workspace-editor:
+  en: 93924a5acba84642
+  zh: 5614564d7fe8263c
+/deepseek-ai-dsh-api-workspace-editor/summary:
+  en: 66354bc44786051c
+  zh: 5d81f3ef8c2068d0
+/deepseek-ai-dsh-api-workspace-editor/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: d152484eb41ac6b4
+/deepseek-ai-dsh-api-workspace-editor/use-this-package:
+  en: 9a63ef9b04363c07
+  zh: b30d2863fa2f1136
+/deepseek-ai-dsh-api-workspace-editor/use-this-package/failures:
+  en: e61b28eeb60bcf06
+  zh: f82718f7c3080e85
+/deepseek-ai-dsh-api-workspace-editor/understand-the-implementation:
+  en: 9766831457fc60c4
+  zh: 363e0a8f85132c1a
+/deepseek-ai-dsh-api-workspace-editor/further-exploration:
+  en: a7c04d78e92fe535
+  zh: f6b1ebf920b1a1b9
+/deepseek-ai-dsh-api-workspace-editor/model-experience:
+  en: 86c640a66f0debf4
+  zh: 86c640a66f0debf4
+/deepseek-ai-dsh-api-workspace-editor/model-experience/kv-cache-effect:
+  en: 21376b99ffb06d00
+  zh: 21376b99ffb06d00
+/deepseek-ai-dsh-api-workspace-editor/known-limitations-and-deferred-work:
+  en: bab20bc904361293
+  zh: 04f4d5d75739fa45
+/deepseek-ai-dsh-api-workspace-editor/known-limitations-and-deferred-work/dev-note:
+  en: 890193ec9fa0d3af
+  zh: a92c1d1eb5868149

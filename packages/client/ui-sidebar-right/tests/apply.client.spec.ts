@@ -64,7 +64,7 @@ async function boot(shortcuts: Partial<Shortcuts> = {}) {
     }),
   }
   const layout = {
-    openRightbar: vi.fn(), closeRightbar: vi.fn(),
+    openRightbar: vi.fn(), closeRightbar: vi.fn(), setSurfaceKind: vi.fn(),
     panelInfo: createSnapshotStore<{ activePanelId: string | null }>({ activePanelId: null }),
   }
   const current = createSnapshotStore<{ key: SessionId | undefined }>({ key: undefined })
@@ -164,14 +164,17 @@ describe('ui-sidebar-right apply', () => {
     const { ctx, layout, current, resources, seat, injectedOf } = await boot()
     const injected = injectedOf(seat('rightbar.session')) as SidebarRightInjected
     // The frame learns the composition of expanded and presentation, nothing else.
-    injected.syncPresentation({ shown: true, track: true, fullscreen: false })
+    injected.syncPresentation({ shown: true, track: true, fullscreen: false, kind: 'files' })
     expect(layout.openRightbar).toHaveBeenLastCalledWith(true, false)
-    injected.syncPresentation({ shown: true, track: true, fullscreen: true })
+    // Frame chrome marks the surface in front from this report.
+    expect(layout.setSurfaceKind).toHaveBeenLastCalledWith('files')
+    injected.syncPresentation({ shown: true, track: true, fullscreen: true, kind: undefined })
     expect(layout.openRightbar).toHaveBeenLastCalledWith(true, true)
-    injected.syncPresentation({ shown: true, track: false, fullscreen: true })
+    injected.syncPresentation({ shown: true, track: false, fullscreen: true, kind: undefined })
     expect(layout.openRightbar).toHaveBeenLastCalledWith(false, true)
-    injected.syncPresentation({ shown: false, track: false, fullscreen: false })
+    injected.syncPresentation({ shown: false, track: false, fullscreen: false, kind: undefined })
     expect(layout.closeRightbar).toHaveBeenCalledOnce()
+    expect(layout.setSurfaceKind).toHaveBeenLastCalledWith(undefined)
     // The registry, observable: what the seat dispatches a kind to.
     expect(injected.hooks.tabTypes.getSnapshot().find(type => type.kind === 'guide')?.id).toBe(GUIDE_ID)
     const seen = vi.fn()

@@ -13,6 +13,9 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import type { HostObservable, SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
+import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
+import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
+import type { MainPanelId } from './service.ts'
 import type { PanelInfo } from './service.ts'
 import { AppFrame } from './AppFrame.tsx'
 import { createLayoutStore } from './stores.ts'
@@ -86,6 +89,16 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      */
     'rightbar': { kind: 'single'; scope: 'root'; owner: RightbarOwnerProps }
     /**
+     * The right rail: a fixed $RAIL_WIDTH column of tool icons at the frame's
+     * right edge, outside the right column and independent of its collapse.
+     *
+     * Each entry is one tool, and each tool owns its own press: the frame reads
+     * the selected panel and the entry's own key, then toggles. The frame passes
+     * `size` and `active`, the same share the left panel rail gives its glyphs,
+     * so a tool reuses one icon component for both rails.
+     */
+    'rightrail': { kind: 'list'; scope: 'root'; owner: RailOwnerProps }
+    /**
      * Frame-wide floating layer, above every column and outside their scroll
      * containers. Deliberately generic and unowned by any feature: a badge, a
      * toast stack or a status pill all belong here, and entries order among
@@ -139,6 +152,47 @@ export interface RightbarOwnerProps {
   canShow: boolean
 }
 
+/** Right rail owner share: the icon edge and selection state the fixed column affords. */
+export interface RailOwnerProps {
+  /** Edge of one icon in px, inside the rail's own padding. */
+  size: number
+  /** Whether this entry's panel is the selected one; a press on it closes again. */
+  active: boolean
+}
+
+/** One rail entry as metadata: the tool's panel key, its place, and its label. */
+export interface RailEntryMetadata {
+  readonly id: MainPanelId
+  readonly order: number
+  readonly label: string
+}
+
+/** What the frame hands its own component: the rail's entries and the press routing they need. */
+export interface AppFrameInjected {
+  readonly hooks: {
+    /** Rail entries in ascending order, republished as tools register and unregister. */
+    readonly railEntries: HostObservable<readonly RailEntryMetadata[]>
+  }
+  /**
+   * Handle one press on a rail entry. A right-column surface takes its own
+   * press; every other entry is a main panel key, and a press on the selected
+   * one returns to the Conversation.
+   * @param id - the entry's key: a main panel key or a registered surface kind.
+   * @param active - whether that panel is the selected one.
+   */
+  readonly pressEntry: (id: string, active: boolean) => void
+}
+
+/** How the frame reaches a right-column surface without depending on that column. */
+interface SurfaceToggler {
+  /**
+   * Open that surface, or close the column when it is already in front.
+   * @param kind - registered page kind.
+   * @returns whether the column took the press.
+   */
+  readonly toggleSurface?: (kind: string) => boolean
+}
+
 /** Required services (cordis fiber inject — the loader passes all module exports as an object plugin). */
 export const inject = ['slots', 'theme', 'locale', 'shortcuts']
 
@@ -168,6 +222,40 @@ export function apply(ctx: ClientContext): void {
       ctx.slots.entries('main').some(entry => entry.options.key === id), panelInfo)
     const disposePanelInfo = ctx.slots.provideRoot({ hooks: { panelInfo: layout.panelInfo } })
     const disposeService = ctx.reflect.provide('layout', layout)
+    // The rail's entries are read as metadata so the frame can own each button:
+    // one tool per entry, ordered, with the label its own package supplies.
+    const railEntries = createSnapshotStore<readonly RailEntryMetadata[]>([])
+    const syncRail = (): void => {
+      const next = ctx.slots.entriesOfSlot('rightrail').map(({ options }) => {
+        // The list registration requires an id; StoredEntry erases the slot kind.
+        const id = options.id as MainPanelId
+        return {
+          id,
+          order: options.order ?? 0,
+          label: resolveSlotLabel(options.label) ?? id,
+        }
+      }).sort((left, right) => left.order - right.order)
+      const previous = railEntries.getSnapshot()
+      if (previous.length === next.length && previous.every((entry, index) => {
+        const candidate = next[index] as RailEntryMetadata
+        return entry.id === candidate.id && entry.order === candidate.order && entry.label === candidate.label
+      })) return
+      railEntries.set(next)
+    }
+    const disposeRailEntries = ctx.slots.subscribe('rightrail', syncRail)
+    const disposeRailLabels = ctx.locale.subscribe(syncRail)
+    syncRail()
+    const frameInject = (): AppFrameInjected => ({
+      hooks: { railEntries },
+      // The right column installs its own surfaces, so the frame asks it first;
+      // it is optional, and read structurally because the frame is below that
+      // column in the module graph and cannot import it.
+      pressEntry: (id, active) => {
+        const surfaces = ctx.get('sidebarRight') as SurfaceToggler | undefined
+        if (surfaces?.toggleSurface?.(id) === true) return
+        layout.selectPanel(active ? null : id as MainPanelId)
+      },
+    })
     const disposeRegistration = ctx.slots.register({
       name: 'root',
       locale: 'common',
@@ -175,10 +263,12 @@ export function apply(ctx: ClientContext): void {
         'sidebar': { kind: 'single', scope: 'root' },
         'main': { kind: 'keyed', scope: 'root' },
         'rightbar': { kind: 'single', scope: 'root' },
+        'rightrail': { kind: 'list', scope: 'root' },
         'shell.overlay': { kind: 'list', scope: 'root' },
         'shell.leading': { kind: 'single', scope: 'root' },
       },
       store,
+      inject: frameInject,
     }, AppFrame)
     const disposeShortcut = ctx.shortcuts.register({
       id: 'sidebar.left.toggle' as ShortcutCommandId, label: () => t('toggle'), aliases: ['sidebar', 'toggle left sidebar'],
@@ -198,6 +288,8 @@ export function apply(ctx: ClientContext): void {
       disposeShortcut()
       layout.dispose()
       disposePanels()
+      disposeRailLabels()
+      disposeRailEntries()
       disposeRegistration()
       disposePanelInfo()
       // provide()'s disposer settles asynchronously; teardown is synchronous fire-and-forget.

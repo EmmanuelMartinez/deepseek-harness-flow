@@ -21,6 +21,7 @@ import { en, zh } from '../src/client/locales.ts'
 interface Recorded {
   name: string
   key: string
+  id?: string
   locale: string
   store: unknown
   inject: unknown
@@ -100,7 +101,10 @@ describe('ui-sidebar-files apply', () => {
     expect(registered.map(entry => [entry.name, entry.key, entry.locale, entry.component])).toEqual([
       ['sidebar.right.pane.tab', FILES_ID, 'sidebarFiles', FilesBody],
       ['sidebar.right.pane.tab.title', FILES_ID, undefined, FilesTitle],
+      // The frame's rail is a list seat, so it takes an id: this surface's kind.
+      ['rightrail', undefined, 'sidebarFiles', expect.anything()],
     ])
+    expect(registered[2]?.id).toBe(FILES_KIND)
     expect(registered[0]?.store).toBeDefined()
     expect(typeof registered[0]?.inject).toBe('function')
   })

@@ -8,14 +8,14 @@
  * service until the Session is disposed. Outside a git repository, or without
  * git, the summary lists file-tool edits only.
  */
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-agent'
+import { GitRunner, resolveGitExecutable } from '@deepseek-ai/dsh-git-command'
 import type { Session, SessionId } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-subprocess'
 import type {} from '@deepseek-ai/dsh-tools'
-import { GitRunner } from './git.ts'
 import { TurnRecorder } from './recorder.ts'
 import type { WorkspaceChanges } from './types.ts'
 
@@ -61,30 +61,6 @@ function eligible(session: Session): string | undefined {
 }
 
 /**
- * Resolve the git executable once. On macOS the Xcode stub at `/usr/bin/git`
- * opens an installer dialog instead of running, so it counts as absent until
- * developer tools are selected.
- * @param ctx - subprocess capability.
- * @param signal - plugin lifetime.
- * @returns the executable path, or null when git is unavailable.
- */
-async function resolveGit(ctx: Context, signal: AbortSignal): Promise<string | null> {
-  let executable: string
-  try {
-    executable = await ctx.subprocess.resolveExecutable('git', undefined, signal)
-  } catch {
-    return null
-  }
-  if (process.platform !== 'darwin' || executable !== '/usr/bin/git') return executable
-  const probe = ctx.subprocess.spawn({
-    argv: ['/usr/bin/xcode-select', '-p'], cwd: homedir(),
-    stdio: { stdin: 'ignore', stdout: { maxBytes: 4096 }, stderr: { maxBytes: 4096 } }, graceMs: 1_000, signal,
-  })
-  const outcome = await probe.done.catch(() => ({ exitCode: null }))
-  return outcome.exitCode === 0 ? executable : null
-}
-
-/**
  * Observe top-level turns of every Session with a working directory, capture
  * file-tool edits, announce change summaries, and serve them with their
  * comparisons as `workspaceChanges`.
@@ -118,13 +94,17 @@ export function apply(ctx: Context, config: Config): void {
   ctx.provide('workspaceChanges', service)
   let runner: Promise<GitRunner | null> | undefined
   const gitRunner = (): Promise<GitRunner | null> => {
-    runner ??= resolveGit(ctx, lifetime.signal).then((executable) => {
-      if (executable === null) {
-        ctx.logger.info('workspace-changes: git is unavailable; only file-tool edits are summarized')
-        return null
-      }
-      return new GitRunner(ctx.subprocess, executable, { timeoutMs: config.timeoutMs, outputMaxBytes: config.outputMaxBytes })
-    })
+    // Any resolution failure reads as "no git" here: a turn's summary still
+    // carries its file-tool edits, so recording never blocks on the lookup.
+    runner ??= resolveGitExecutable(ctx.subprocess, lifetime.signal)
+      .catch(() => ({ reason: 'missing' as const }))
+      .then((resolved) => {
+        if ('reason' in resolved) {
+          ctx.logger.info('workspace-changes: git is unavailable; only file-tool edits are summarized')
+          return null
+        }
+        return new GitRunner(ctx.subprocess, resolved.executable, { timeoutMs: config.timeoutMs, outputMaxBytes: config.outputMaxBytes })
+      })
     return runner
   }
   const recorderFor = (session: Session, cwd: string): TurnRecorder => {

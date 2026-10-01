@@ -225,6 +225,12 @@ export interface ISidebarRight {
    */
   active(): TabRecord | undefined
   /**
+   * Open the page surface of one kind, or close the column when it is already in front.
+   * @param kind - registered page kind.
+   * @returns whether this column took the press.
+   */
+  toggleSurface(kind: string): boolean
+  /**
    * Whether the column is currently showing its panel.
    * @returns `true` while expanded; `false` while collapsed to its rail.
    */
@@ -332,6 +338,35 @@ export class SidebarRightController implements ISidebarRight {
   openTab<K extends string>(kind: K, options: SidebarRightOpenTabOptions<K> = {}): void {
     const { sessionId, actions } = this.require()
     this.placeTab(sessionId, actions, kind, options)
+  }
+
+  /**
+   * Open the page surface of one kind, or close the column when it is already in
+   * front: the same press opens a tool and puts it away again.
+   *
+   * A press on a kind the registry does not carry, or without a Session surface
+   * on screen, is declined rather than thrown, so a caller may offer a press that
+   * belongs to another destination instead.
+   * @param kind - registered page kind.
+   * @returns whether this column took the press.
+   */
+  toggleSurface(kind: string): boolean {
+    if (this.tabs.get(kind) === undefined) return false
+    const sessionId = this.mounted.getSnapshot()
+    const actions = sessionId === undefined ? undefined : this.actionsFor(sessionId)
+    if (sessionId === undefined || actions === undefined) return false
+    if (this.isExpanded() && this.active()?.kind === kind) {
+      actions.setExpanded(sessionId, false)
+      return true
+    }
+    this.host.openWithFocus(sessionId, () => {
+      actions.setExpanded(sessionId, true)
+      const open = Object.values(this.mountedSurface()?.layout.tabs ?? {}).find(tab => tab.kind === kind)
+      if (open === undefined) this.openTab(kind)
+      else this.focus(open.id)
+      return this.mountedSurface()?.layout.activePaneId
+    })
+    return true
   }
 
   /**

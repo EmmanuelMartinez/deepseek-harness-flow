@@ -13,10 +13,13 @@
 import type { ShortcutCommandId } from '@deepseek-ai/dsh-client-shortcuts/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
+import type {} from '@deepseek-ai/dsh-client-ui-editor/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
-import { FILES_ID, filesDefinition } from './definition.tsx'
+import { IconWorkspaceTreeOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
+import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import { FILES_ID, FILES_KIND, filesDefinition } from './definition.tsx'
 import { createList, createWatch, filesFace } from './face.ts'
 import { FilesBody } from './FilesBody.tsx'
 import { FilesTitle } from './FilesTitle.tsx'
@@ -82,7 +85,11 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-sidebar-files: dictionaries')
 
   const store = createFilesStore()
-  const inject = filesFace(createList(ctx.remote), createWatch(ctx.remote))
+  // A file opens in the Editor panel when the composition mounts it; without
+  // that panel the row keeps handing the file to the read-only preview.
+  const openInEditor = (absolutePath: string): boolean =>
+    ctx.get('editorNavigation')?.open(absolutePath) === true
+  const inject = filesFace(createList(ctx.remote), createWatch(ctx.remote), openInEditor)
   ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register(
     {
       name: 'sidebar.right.pane.tab', key: FILES_ID, locale: NS, store, inject,
@@ -94,4 +101,13 @@ export function apply(ctx: ClientContext): void {
     { name: 'sidebar.right.pane.tab.title', key: FILES_ID },
     FilesTitle,
   )), 'ui-sidebar-files: files tab title')
+  // The frame's right rail offers this surface by kind: the frame owns the
+  // button, and its press opens the tree or puts the column away again.
+  ctx.effect(() => ctx.slots.inject('rightrail', () => ctx.slots.register({
+    name: 'rightrail',
+    id: FILES_KIND,
+    order: 30,
+    label: () => t('type.label'),
+    locale: NS,
+  }, IconWorkspaceTreeOutlineRegular)), 'ui-sidebar-files: rail entry')
 }

@@ -105,6 +105,16 @@ describe('main panel selection', () => {
     expect(store.getSnapshot().panelInfo.activePanelId).toBe(panelA)
   })
 
+  it('records the front surface kind beside the selected panel', () => {
+    const { store, actions } = createLayoutStore().create()
+    actions.selectPanel(panelA)
+    actions.setSurfaceKind('files')
+    expect(store.getSnapshot().panelInfo).toEqual({ activePanelId: panelA, surfaceKind: 'files' })
+    // The column collapsing clears it without touching the panel selection.
+    actions.setSurfaceKind(undefined)
+    expect(store.getSnapshot().panelInfo).toEqual({ activePanelId: panelA, surfaceKind: undefined })
+  })
+
   it('returns to the Conversation only when the selected main registration disappears', () => {
     const { store, actions } = createLayoutStore().create()
     const initial = store.getSnapshot()

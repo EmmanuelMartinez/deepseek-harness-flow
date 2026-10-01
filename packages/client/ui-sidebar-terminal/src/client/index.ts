@@ -11,6 +11,8 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import { PluginArtworkTerminal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { TerminalRailIcon } from './TerminalRailIcon.tsx'
+import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import { TerminalGuide, type TerminalGuideInjected } from './TerminalGuide.tsx'
 import { LazyTerminalBody } from './LazyTerminalBody.tsx'
 import { TerminalTitle } from './TerminalTitle.tsx'
@@ -99,6 +101,15 @@ export function apply(ctx: Context): void {
   ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register(
     { name: 'sidebar.right.pane.tab.title', key: id, locale: namespace, inject }, TerminalTitle,
   )), 'ui-sidebar-terminal.title')
+  // The frame's right rail offers this surface by kind: the frame owns the
+  // button, and its press opens a terminal or puts the column away again.
+  ctx.effect(() => ctx.slots.inject('rightrail', () => ctx.slots.register({
+    name: 'rightrail',
+    id: 'terminal',
+    order: 40,
+    label: () => t('title'),
+    locale: namespace,
+  }, TerminalRailIcon)), 'ui-sidebar-terminal.rail')
   // ctx.effect(() => ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
   //   name: 'conversation.session.header.actions', id, locale: namespace,
   //   inject: (sessionId): TerminalRecoveryInjected => ({

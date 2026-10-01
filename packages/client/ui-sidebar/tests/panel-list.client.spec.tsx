@@ -43,6 +43,7 @@ async function bench(collapsed = false) {
     toggleSidebar: vi.fn(),
     selectPanel: vi.fn((activePanelId: MainPanelId | null) => { runtime.panelInfo.set({ activePanelId }) }),
     openRightbar: vi.fn(),
+    setSurfaceKind: vi.fn(),
     closeRightbar: vi.fn(),
   } satisfies ILayout
   await runtime.mount({

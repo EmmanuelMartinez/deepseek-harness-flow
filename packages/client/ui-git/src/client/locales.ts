@@ -1,0 +1,68 @@
+/** Git panel interface copy. */
+
+/** Simplified Chinese dictionary and key source of truth. */
+export const zh = {
+  panel: '版本控制',
+  'rail.count': '{count} 个改动的文件',
+  title: '版本控制',
+  workspace: '工作区',
+  refresh: '刷新',
+  loading: '正在读取仓库…',
+  noWorkspace: '选择一个工作区以查看它的仓库。',
+  notARepository: '该工作区不在任何 git 仓库内。',
+  unavailable: '此 Host 上没有可用的 git。',
+  failed: '无法读取仓库。',
+  changes: '更改',
+  detached: '游离 HEAD',
+  noChanges: '没有改动的文件。',
+  staged: '已暂存',
+  unstaged: '未暂存',
+  untracked: '未跟踪',
+  history: '历史',
+  noCommits: '还没有提交。',
+  moreCommits: '更早的提交未显示。',
+  truncated: '已按配置的上限截断。',
+  files: '文件',
+  commit: '提交',
+  author: '作者',
+  date: '日期',
+  parents: '父提交',
+  binary: '二进制',
+  refs: '引用',
+  close: '关闭',
+} satisfies Record<string, string>
+
+/** Git panel locale key union. */
+export type GitLocaleKey = keyof typeof zh
+
+/** English dictionary checked against the Chinese key set. */
+export const en = {
+  panel: 'Source control',
+  'rail.count': '{count} changed files',
+  title: 'Source control',
+  workspace: 'Workspace',
+  refresh: 'Refresh',
+  loading: 'Reading repository…',
+  noWorkspace: 'Select a workspace to show its repository.',
+  notARepository: 'This workspace is not inside a git repository.',
+  unavailable: 'Git is unavailable on this Host.',
+  failed: 'The repository could not be read.',
+  changes: 'Changes',
+  detached: 'detached',
+  noChanges: 'No changed files.',
+  staged: 'Staged',
+  unstaged: 'Unstaged',
+  untracked: 'Untracked',
+  history: 'History',
+  noCommits: 'No commits yet.',
+  moreCommits: 'Older commits are not shown.',
+  truncated: 'Cut at the configured limit.',
+  files: 'Files',
+  commit: 'Commit',
+  author: 'Author',
+  date: 'Date',
+  parents: 'Parents',
+  binary: 'Binary',
+  refs: 'Refs',
+  close: 'Close',
+} satisfies Record<GitLocaleKey, string>

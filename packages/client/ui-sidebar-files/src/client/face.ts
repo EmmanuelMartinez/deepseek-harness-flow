@@ -141,17 +141,25 @@ export interface FilesInjected {
    * @param signal - the tab record's lifetime.
    */
   readonly toggle: (tabId: TabId, parentPath: string, path: string, expanded: readonly string[], signal: AbortSignal) => void
+  /**
+   * Show one file in the Editor panel when the composition mounts it.
+   * @param absolutePath - absolute path of the file.
+   * @returns whether the Editor took it; `false` leaves the caller to open it another way.
+   */
+  readonly openInEditor: (absolutePath: string) => boolean
 }
 
 /**
  * Bind the tree's face to one directory listing.
  * @param list - the bound `workspaceFiles.list` call.
  * @param watch - target-scoped directory observation.
+ * @param openInEditor - hands one file to the Editor panel, when a composition mounts it.
  * @returns the Slot `inject` factory: session and bound actions in, face out.
  */
 export function filesFace(
   list: ListWorkspaceDirectory,
   watch: WatchWorkspaceDirectory,
+  openInEditor: (absolutePath: string) => boolean,
 ): (sessionId: SessionId, actions: BoundActions<ReturnType<typeof createFilesStore>>) => FilesInjected {
   return (
     sessionId: SessionId,
@@ -182,6 +190,7 @@ export function filesFace(
     }
     return {
       refresh: (tabId) => { void roots.get(tabId)?.refreshTree() },
+      openInEditor,
       setAutoRefresh: (tabId, enabled) => {
         actions.autoRefresh(tabId, enabled)
         roots.get(tabId)?.setAutomatic(enabled)

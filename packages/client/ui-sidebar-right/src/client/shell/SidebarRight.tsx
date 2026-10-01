@@ -36,7 +36,7 @@ import type {
 } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '../contract/slots.ts'
 import type { DockIntents, DockMode, FloatRect, TabId, TabRecord, TabRenderer } from '@deepseek-ai/dsh-client-ui-dockkit'
-import { canSplit, dockPaneIds, DockLayout, findPaneContentTab } from '@deepseek-ai/dsh-client-ui-dockkit'
+import { activeDockPaneId, canSplit, dockPaneIds, DockLayout, findPaneContentTab, getPane } from '@deepseek-ai/dsh-client-ui-dockkit'
 import type { HalvesFit, LayoutState, PaneId } from '@deepseek-ai/dsh-client-ui-dockkit'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { GUIDE_KIND, pageAddress } from '../contract/seed.ts'
@@ -64,6 +64,8 @@ export interface SidebarRightPresentation {
   readonly track: boolean
   /** Whether the panel fills the viewport, independently of its retained track. */
   readonly fullscreen: boolean
+  /** The surface kind in front, for chrome that marks the tool it belongs to. */
+  readonly kind: string | undefined
 }
 
 /** What this package needs from its host beyond the framework shares. */
@@ -345,6 +347,16 @@ function SidebarPanel(panel: PanelProps & { width: number; panelRef: RefObject<H
 }
 
 /**
+ * The kind of the tab in front of one surface's active pane.
+ * @param surface - the Session's committed surface state.
+ * @returns the active tab's kind, or undefined without one.
+ */
+function frontKindOf(surface: SurfaceState): string | undefined {
+  const { activeTabId } = getPane(surface.layout, activeDockPaneId(surface.layout))
+  return activeTabId === undefined ? undefined : surface.layout.tabs[activeTabId]?.kind
+}
+
+/**
  * The right column's occupant: stable tab containers, docked or floating.
  * It is also where the frame learns the panel's presentation, because this is
  * the seat that knows it. `ctx.sidebarRight` names the on-screen Session
@@ -358,6 +370,8 @@ export function RightbarSeat({
   // One store instance per session, so this map holds this session's surface.
   const shortcuts = useShortcuts(entries => entries)
   const surface = useStore(state => state.bySession[sessionId])
+  // The tab in front of this surface's active pane: what frame chrome marks.
+  const kind = active && surface !== undefined && surface.layout.expanded ? frontKindOf(surface) : undefined
   const shown = active && surface !== undefined && surface.layout.expanded
   const autoFullscreen = viewportWidth < 768
   const fullscreen = autoFullscreen || surface?.layout.mode === 'fullscreen'
@@ -397,7 +411,7 @@ export function RightbarSeat({
           && animation.playState !== 'finished' && animation.playState !== 'idle')
         : []
       if (entering.length === 0) {
-        syncPresentation({ shown, track, fullscreen })
+        syncPresentation({ shown, track, fullscreen, kind })
         return
       }
       // Cancellation can replace the transition or remove it for reduced motion.
@@ -405,11 +419,11 @@ export function RightbarSeat({
     }
     reportWhenCovered()
     return () => { disposed = true }
-  }, [sessionId, shown, track, fullscreen, syncPresentation, active])
+  }, [sessionId, shown, track, fullscreen, kind, syncPresentation, active])
   // Leaving is part of that report: a seat that unmounts with its session must
   // hand the track back rather than leave one sized for a surface nobody draws.
   useLayoutEffect(() => active
-    ? () => { syncPresentation({ shown: false, track: false, fullscreen: false }) }
+    ? () => { syncPresentation({ shown: false, track: false, fullscreen: false, kind: undefined }) }
     : undefined, [syncPresentation, active])
 
   // The Tab domain is not synced here: the controller adopted this session's

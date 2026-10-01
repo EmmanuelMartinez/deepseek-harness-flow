@@ -10,6 +10,7 @@ import {
   collectHostDependencyExportPolicyViolations,
   collectPackageDependencyViolations,
   collectRuntimeSourceExportUses,
+  collectUnmanagedGeneratedHostViolations,
   discoverPackageDependencyScope,
   expectedPackageDependencies,
   fixPackageDependencies,
@@ -17,6 +18,7 @@ import {
   formatPeerRequiredRuntimeDependencies,
   readPackageDependencyFacts,
   readPackageDependencyState,
+  readWorkspacePackageManifests,
   repairPackageDependencyManifest,
   type PackageDependencyFacts,
   type PackageDependencyManifest,
@@ -106,21 +108,25 @@ function sourceFacts(
   return readPackageDependencyFacts(root, subject, role, new Set([CORDIS, subject.name]), policy())
 }
 
-function generatedHostFixture(mode: 'schema' | 'object'): { root: string; manifestPath: string; source: string } {
+function generatedHostFixture(
+  mode: 'schema' | 'object',
+  options: { readonly directory?: string; readonly clientDeclaration?: boolean; readonly declareZod?: boolean } = {},
+): { root: string; manifestPath: string; source: string } {
   const root = mkdtempSync(join(tmpdir(), 'dsh-generated-host-dependencies-'))
   roots.push(root)
-  const manifestPath = 'packages/client/probe/package.json'
+  const directory = options.directory ?? 'packages/client/probe'
+  const manifestPath = `${directory}/package.json`
   const source = `/** @typert ${mode} */\nexport interface Payload { value: string }\n`
   const manifest = {
     name: '@fixture/generated',
     type: 'module',
-    dsh: { client: {} },
+    ...options.clientDeclaration === false ? {} : { dsh: { client: {} } },
     exports: {
       '.': { types: './lib/types/index.d.ts', default: './lib/index.js' },
       './typert': { types: './lib/typert.host.d.ts', default: './lib/typert.host.js' },
     },
     files: ['lib/typert.host.js', 'lib/typert.host.d.ts'],
-    dependencies: { zod: '^4.0.0' },
+    ...options.declareZod === false ? {} : { dependencies: { zod: '^4.0.0' } },
     devDependencies: { [CORDIS]: 'workspace:~' },
     peerDependencies: { [CORDIS]: 'workspace:~' },
   }
@@ -132,13 +138,13 @@ function generatedHostFixture(mode: 'schema' | 'object'): { root: string; manife
       },
     }),
     'tsconfig.host.json': JSON.stringify({
-      extends: './tsconfig.base.json', files: [], references: [{ path: './packages/client/probe' }],
+      extends: './tsconfig.base.json', files: [], references: [{ path: `./${directory}` }],
     }),
-    'packages/client/probe/tsconfig.json': JSON.stringify({
+    [`${directory}/tsconfig.json`]: JSON.stringify({
       extends: '../../../tsconfig.base.json', compilerOptions: { rootDir: 'src' }, include: ['src'],
     }),
     [manifestPath]: JSON.stringify(manifest),
-    'packages/client/probe/src/index.ts': source,
+    [`${directory}/src/index.ts`]: source,
   }
   for (const [path, content] of Object.entries(files)) {
     mkdirSync(dirname(join(root, path)), { recursive: true })
@@ -204,6 +210,7 @@ describe('package dependency scope', () => {
     })
     expect(PACKAGE_DEPENDENCY_POLICY.duplicateSafePackages).toEqual([
       '@deepseek-ai/dsh-brand',
+      '@deepseek-ai/dsh-git-command',
       '@deepseek-ai/dsh-lazy-require',
       '@deepseek-ai/dsh-typert-protocol',
       '@deepseek-ai/dsh-util-code-language',
@@ -364,6 +371,30 @@ describe('face-aware source classification', () => {
     expect(subject.manifest.dependencies?.zod).toBeUndefined()
     expect(subject.manifest.devDependencies?.zod).toBe('^4.0.0')
     expect(existsSync(join(root, 'packages/client/probe/lib'))).toBe(false)
+  })
+
+  it('requires a generated artifact dependency outside the managed roster to be declared', () => {
+    const { root, manifestPath } = generatedHostFixture('schema', {
+      directory: 'packages/api/probe', clientDeclaration: false, declareZod: false,
+    })
+    const packages = readWorkspacePackageManifests(root).release
+    const workspaceNames = new Set(packages.map(pkg => pkg.name))
+
+    expect(discoverPackageDependencyScope(packages, policy()).selected).toEqual([])
+    expect(collectUnmanagedGeneratedHostViolations(root, packages, workspaceNames, new Set())).toEqual([
+      'packages/api/probe/package.json: the generated ./typert module imports zod; declare it in dependencies',
+    ])
+    expect(collectUnmanagedGeneratedHostViolations(
+      root, packages, workspaceNames, new Set(['@fixture/generated']),
+    )).toEqual([])
+
+    const manifest = JSON.parse(readFileSync(join(root, manifestPath), 'utf8')) as {
+      dependencies?: Record<string, string>
+    }
+    manifest.dependencies = { zod: '^4.0.0' }
+    writeFileSync(join(root, manifestPath), JSON.stringify(manifest))
+    const declared = readWorkspacePackageManifests(root).release
+    expect(collectUnmanagedGeneratedHostViolations(root, declared, workspaceNames, new Set())).toEqual([])
   })
 
   it('rejects a declared Host Typert module absent from the Host program', () => {

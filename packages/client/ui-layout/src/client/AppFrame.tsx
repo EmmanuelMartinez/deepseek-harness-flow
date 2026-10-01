@@ -16,25 +16,64 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
-  PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore,
+  InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import { CENTER_MIN, clampWidth, computeColumns, RIGHTBAR_DEFAULT_RATIO, RIGHTBAR_MAX_RATIO, RIGHTBAR_MIN, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_COLLAPSED, SIDEBAR_DEFAULT } from './columns.ts'
 import { DocumentTitle } from './DocumentTitle.tsx'
+import type { AppFrameInjected, RailEntryMetadata, UsePanelInfo } from './index.ts'
 import type { createLayoutStore } from './stores.ts'
 import css from './AppFrame.module.css'
 
 /** Full composed props: runtime share + child-slot render share + store share. */
 export type AppFrameProps =
   & PropsRuntime<'root'>
-  & PropsRenderSlots<'sidebar' | 'main' | 'rightbar' | 'shell.overlay' | 'shell.leading'>
+  & PropsRenderSlots<'sidebar' | 'main' | 'rightbar' | 'rightrail' | 'shell.overlay' | 'shell.leading'>
   & PropsStore<ReturnType<typeof createLayoutStore>>
   & PropsLocale<'common'>
+  & InjectFace<AppFrameInjected>
+
+/**
+ * One rail entry: the frame owns the button, its active state, and its toggle,
+ * so the tool's own package contributes only its glyph.
+ * @param props - the entry's metadata, the icon edge, and the frame's own shares.
+ * @returns the rail button.
+ */
+function RailEntry({ entry, size, pressEntry, usePanelInfo, renderSlot }: {
+  readonly entry: RailEntryMetadata
+  readonly size: number
+  readonly pressEntry: AppFrameInjected['pressEntry']
+  readonly usePanelInfo: UsePanelInfo
+  readonly renderSlot: PropsRenderSlots<'rightrail'>['renderSlot']
+}): ReactNode {
+  // A press toggles the entry's key: a main panel key lights while it is
+  // selected, and a right-column surface key lights while that surface is in
+  // front of the column the frame makes room for.
+  const active = usePanelInfo(info => info.activePanelId === entry.id || info.surfaceKind === entry.id)
+  return (
+    <Tooltip label={entry.label} delayMs={500}>
+      <button
+        type="button"
+        className={active ? `${css.railButton} ${css.railButtonActive}` : css.railButton}
+        aria-label={entry.label}
+        aria-current={active ? 'page' : undefined}
+        data-rail-entry={entry.id}
+        onClick={() => { pressEntry(entry.id, active) }}
+      >
+        {renderSlot('rightrail', { size, active }, { only: entry.id })}
+      </button>
+    </Tooltip>
+  )
+}
 
 /** Center column grid item (session-body building block). */
 function CenterColumn(props: { children?: ReactNode }) {
   return <div className={css.centerCol}>{props.children}</div>
 }
+
+/** Edge of one rail icon: the glyph fits the fixed rail column with its button padding. */
+const RAIL_ICON_SIZE = 18
 
 /** Subscribe to the main key without subscribing the column frame to each panel id. */
 function MainPanel({ usePanelInfo, renderSlot }: Pick<PropsRuntime<'root'>, 'usePanelInfo'> & PropsRenderSlots<'main'>) {
@@ -122,11 +161,14 @@ export function AppFrame({
   useStore,
   useSessions,
   usePanelInfo,
+  useRailEntries,
+  pressEntry,
   actions,
   renderSlot,
   t,
 }: AppFrameProps) {
   const layoutInfo = useStore(state => state.layoutInfo)
+  const railEntries = useRailEntries(value => value)
   const frameRef = useRef<HTMLDivElement | null>(null)
   const viewport = layoutInfo.viewportWidth
 
@@ -163,8 +205,9 @@ export function AppFrame({
     ? 0
     : layoutInfo.sidebar === 0 ? SIDEBAR_DEFAULT : layoutInfo.sidebar
   const rightbarPreference = layoutInfo.rightbar ?? viewport * RIGHTBAR_DEFAULT_RATIO
-  // Desktop reopen controls occupy the frame's shell.leading seat (macOS) or
-  // the Windows caption row; neither platform keeps an icon rail.
+  // The left column's reopen controls occupy the frame's shell.leading seat
+  // (macOS) or the Windows caption row, so neither platform keeps a left icon
+  // rail; the right rail is that column's own fixed track beside this solve.
   const darwin = document.documentElement.dataset.platform === 'darwin'
   const collapsedWidth = darwin
     || document.documentElement.hasAttribute('data-windows-titlebar') ? 0 : SIDEBAR_COLLAPSED
@@ -263,7 +306,7 @@ export function AppFrame({
         ...(document.documentElement.hasAttribute('data-windows-titlebar')
           ? { '--dsh-windows-sidebar-width': `${cols.sidebar}px` } : {}),
         gridTemplateColumns:
-          `${cols.sidebar}px minmax(${cols.rightbar === 0 ? 0 : CENTER_MIN}px, 1fr) minmax(0px, ${rightbarMax}px)`,
+          `${cols.sidebar}px minmax(${cols.rightbar === 0 ? 0 : CENTER_MIN}px, 1fr) minmax(0px, ${rightbarMax}px) ${cols.rail}px`,
       }}
       data-sidebar-collapsed={sidebarCollapsed || undefined}
       data-rightbar-collapsed={cols.rightbar === 0 || undefined}
@@ -286,6 +329,18 @@ export function AppFrame({
           {renderSlot('rightbar', { width: normal.rightbar, viewportWidth: viewport, canShow: normal.rightbar > 0 })}
         </RightbarColumn>
       </>
+      <div className={css.railCol} data-shell-rail>
+        {railEntries.map(entry => (
+          <RailEntry
+            key={entry.id}
+            entry={entry}
+            size={RAIL_ICON_SIZE}
+            pressEntry={pressEntry}
+            usePanelInfo={usePanelInfo}
+            renderSlot={renderSlot}
+          />
+        ))}
+      </div>
       <div className={css.overlayLayer} data-shell-overlay>
         {overlays}
       </div>
@@ -297,7 +352,7 @@ export function AppFrame({
       {/* The collapsed rail is fixed-width: no resize handle while closed. */}
       {!sidebarCollapsed && <DragHandle side="sidebar" left={cols.sidebar} onStart={onSidebarStart} onDrag={onSidebarDrag} onEnd={onDragEnd} />}
       {layoutInfo.rightbarShown && !layoutInfo.rightbarFullscreen && normal.rightbar > 0 && (
-        <DragHandle side="rightbar" left={viewport - normal.rightbar} onStart={onRightbarStart} onDrag={onRightbarDrag} onEnd={onDragEnd} />
+        <DragHandle side="rightbar" left={viewport - normal.rightbar - cols.rail} onStart={onRightbarStart} onDrag={onRightbarDrag} onEnd={onDragEnd} />
       )}
     </div>
   )

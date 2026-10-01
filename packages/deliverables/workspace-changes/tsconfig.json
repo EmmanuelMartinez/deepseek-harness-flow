@@ -24,6 +24,9 @@
       "path": "../../core/tools"
     },
     {
+      "path": "../../git/git-command"
+    },
+    {
       "path": "../../subprocess/subprocess"
     },
     {

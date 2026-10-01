@@ -85,6 +85,12 @@
       "path": "../settings-controller"
     },
     {
+      "path": "../git-controller"
+    },
+    {
+      "path": "../workspace-editor"
+    },
+    {
       "path": "../workspace-controller/tsconfig.client.json"
     },
     {

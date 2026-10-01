@@ -102,6 +102,8 @@ it('registers terminal views without recovery or cleanup slots, then releases co
       ['sidebar.right.tab.guide.entry', TerminalGuide, 'sidebarTerminal'],
       ['sidebar.right.pane.tab', LazyTerminalBody, 'sidebarTerminal'],
       ['sidebar.right.pane.tab.title', TerminalTitle, 'sidebarTerminal'],
+      // The frame's rail takes this surface by kind, not by implementation id.
+      ['rightrail', expect.anything(), 'sidebarTerminal'],
     ])
     const sessionId = 'session' as SessionId
     const launcher = h.entries[0]!.inject(sessionId) as TerminalGuideInjected
