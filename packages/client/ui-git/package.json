@@ -54,6 +54,7 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
     "@deepseek-ai/dsh-api-remotes": "workspace:*",
+    "@deepseek-ai/dsh-api-git-controller": "workspace:*",
     "@deepseek-ai/dsh-api-workspace-controller": "workspace:*",
     "@deepseek-ai/dsh-client-locale": "workspace:*",
     "@deepseek-ai/dsh-client-test-runtime": "workspace:*",

@@ -94,11 +94,16 @@ describe('real Loader composition', () => {
     ])
     context.loader.internal = {
       version: 'v2',
-      async import(specifier: string) {
+      import: async (specifier: string) => {
         if (!modules.has(specifier)) throw new Error(`unexpected Loader import: ${specifier}`)
         return modules.get(specifier)
       },
-    } as unknown as NonNullable<typeof context.loader.internal>
+      loadCache: new Map(),
+      register(): never { throw new Error('unexpected module hook registration') },
+      getOrCreateModuleJob(): never { throw new Error('unexpected module job creation') },
+      resolveSync(): never { throw new Error('unexpected synchronous module resolution') },
+      load(): never { throw new Error('unexpected module load') },
+    }
     await context.loader.create({
       name: 'cordis:include',
       config: { path: pathToFileURL(join(root, 'cordis.yml')).href },
