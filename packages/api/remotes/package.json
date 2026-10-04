@@ -63,6 +63,7 @@
     "@deepseek-ai/dsh-agent-preset-registry": "workspace:*",
     "@deepseek-ai/dsh-api-gateway": "workspace:*",
     "@deepseek-ai/dsh-api-git-controller": "workspace:*",
+    "@deepseek-ai/dsh-api-customizations-controller": "workspace:*",
     "@deepseek-ai/dsh-api-workspace-editor": "workspace:*",
     "@deepseek-ai/dsh-api-job-controller": "workspace:*",
     "@deepseek-ai/dsh-api-session-controller": "workspace:*",

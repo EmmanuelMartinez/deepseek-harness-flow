@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/api/customizations-controller/README.md
+/:
+  en: 5577dac4cf00666a
+  zh: 8c1d23b2c761b1c1
+/deepseek-ai-dsh-api-customizations-controller:
+  en: 1543a23e8cead321
+  zh: 39b267ad7183b559
+/deepseek-ai-dsh-api-customizations-controller/summary:
+  en: 8a0a743d3f32b6b1
+  zh: 08f4c09fdc41f47c
+/deepseek-ai-dsh-api-customizations-controller/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-api-customizations-controller/use-this-package:
+  en: cb721f48d4785d5e
+  zh: a2d8b546989481f2
+/deepseek-ai-dsh-api-customizations-controller/understand-the-implementation:
+  en: 7c4db49d5c9dc676
+  zh: 7d83c746cf1ed43e
+/deepseek-ai-dsh-api-customizations-controller/further-exploration:
+  en: d57115791177f6a4
+  zh: 1ba1dc657fef553b
+/deepseek-ai-dsh-api-customizations-controller/model-experience:
+  en: 8c003adfdfc955c1
+  zh: a541f3eff28be555
+/deepseek-ai-dsh-api-customizations-controller/model-experience/kv-cache-effect:
+  en: 4c26382e2855dca6
+  zh: a9fb276029330646
+/deepseek-ai-dsh-api-customizations-controller/known-limitations-and-deferred-work:
+  en: 2a546dfbdf48709e
+  zh: 699670329ef2df48
+/deepseek-ai-dsh-api-customizations-controller/known-limitations-and-deferred-work/dev-note:
+  en: d9361231bd53c0aa
+  zh: f2f816865794ef0d

@@ -414,6 +414,49 @@ Host service backing the generated `ctx.remote.workspace` namespace.
 
 Source: [`packages/api/workspace-controller/src/index.ts`](../../packages/api/workspace-controller/src/index.ts)
 
+<a id="ctxworkspaceeditor--workspaceeditor"></a>
+
+### `ctx.workspaceEditor` — `WorkspaceEditor`
+
+Host Remote owner of the `workspaceEditor` namespace.
+
+```ts cordis-catalog
+/**
+ * Read one document's complete text and the version a write must send back.
+ * @param workspaceId - registered Workspace the path is relative to.
+ * @param path - Workspace-relative path of the file to read.
+ * @param signal - caller cancellation.
+ * @returns the document's text, version, and size.
+ * @throws RemoteError when the path is outside the Workspace, is not a regular file, is not text, or exceeds the cap.
+ */
+@Remote async read(workspaceId: WorkspaceId, path: string, signal: AbortSignal): Promise<WorkspaceDocumentView>
+
+/**
+ * Report one document's identity and current version without its text.
+ * @param workspaceId - registered Workspace the path is relative to.
+ * @param path - Workspace-relative path of the file to stat.
+ * @param signal - caller cancellation.
+ * @returns the document's version and size.
+ * @throws RemoteError when the path is outside the Workspace or is not a regular file.
+ */
+@Remote async stat(workspaceId: WorkspaceId, path: string, signal: AbortSignal): Promise<WorkspaceDocumentStatView>
+
+/**
+ * Write one document's complete text under the caller's expectation.
+ * @param workspaceId - registered Workspace the path is relative to.
+ * @param path - Workspace-relative path of the file to write.
+ * @param text - the complete new text.
+ * @param expected - the state the caller read, or a create-only request.
+ * @param signal - caller cancellation.
+ * @returns the document's new version and size.
+ * @throws RemoteError when the path is outside the Workspace, the content exceeds the cap,
+ * the expectation no longer holds, or the write policy refuses it.
+ */
+@Remote async write( workspaceId: WorkspaceId, path: string, text: string, expected: WorkspaceWriteExpectation, signal: AbortSignal, ): Promise<WorkspaceDocumentStatView>
+```
+
+Source: [`packages/api/workspace-editor/src/index.ts`](../../packages/api/workspace-editor/src/index.ts)
+
 <a id="ctxworkspacefiles--workspacefiles"></a>
 
 ### `ctx.workspaceFiles` — `WorkspaceFiles`

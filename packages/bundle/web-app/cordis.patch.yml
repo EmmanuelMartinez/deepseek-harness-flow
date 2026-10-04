@@ -142,6 +142,16 @@
     - id: workspace-editor
       name: '@deepseek-ai/dsh-api-workspace-editor'
 
+    # Read-only Skills and MCP inventory over Typert Remote: the merged skill
+    # catalog of the composed presets plus every MCP Loader row with the tools
+    # it registered. The Customizations settings pane renders it.
+    - id: customizations-controller
+      name: '@deepseek-ai/dsh-api-customizations-controller'
+      config:
+        maxSkills: 500
+        maxMcpServers: 100
+        maxMcpTools: 200
+
     # Configuration-surface reads and writes over Typert Remote. Each method
     # reports an actionable error when its settings-domain provider is absent.
     - id: ui-settings-account
@@ -314,6 +324,11 @@
     # bundles the sidebar page leaves out are inspected here.
     - id: ui-settings-plugin-inventory
       name: '@deepseek-ai/dsh-client-ui-settings-plugin-inventory'
+
+    # Customizations: the Skills and MCP inventory of this deployment, read
+    # through the `customizations` Remote namespace.
+    - id: ui-settings-customizations
+      name: '@deepseek-ai/dsh-client-ui-settings-customizations'
 
     - id: ui-conversation
       name: '@deepseek-ai/dsh-client-ui-conversation'

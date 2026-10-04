@@ -843,6 +843,19 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'customizations',
+    summary: 'Host Remote owner of the `customizations` namespace.',
+    description: 'Host Remote owner of the `customizations` namespace.',
+    methods: [
+      {
+        signature: '@Remote(\'snapshot\') async snapshot(): Promise<CustomizationsSnapshot>',
+        description: 'Read every Skill, MCP server, and instruction file the current composition holds.\n\nThe read has no Session: skills are merged across the composed presets and the global layer, MCP rows are read from the Loader wherever they were declared, and instruction files are probed from the first registered Workspace directory.',
+        parameters: [],
+        returns: 'the merged catalog, the MCP rows, the instruction chain, and the estimate.',
+      },
+    ],
+  },
+  {
     key: 'deepseekAccount',
     summary: 'Account operations; only Host consumers can obtain a request credential.',
     description: 'Account operations; only Host consumers can obtain a request credential.',
@@ -3643,6 +3656,34 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'workspaceEditor',
+    summary: 'Host Remote owner of the `workspaceEditor` namespace.',
+    description: 'Host Remote owner of the `workspaceEditor` namespace.',
+    methods: [
+      {
+        signature: '@Remote async read(workspaceId: WorkspaceId, path: string, signal: AbortSignal): Promise<WorkspaceDocumentView>',
+        description: 'Read one document\'s complete text and the version a write must send back.',
+        parameters: [{ name: 'workspaceId', description: 'registered Workspace the path is relative to.' }, { name: 'path', description: 'Workspace-relative path of the file to read.' }, { name: 'signal', description: 'caller cancellation.' }],
+        returns: 'the document\'s text, version, and size.',
+        throws: ['RemoteError when the path is outside the Workspace, is not a regular file, is not text, or exceeds the cap.'],
+      },
+      {
+        signature: '@Remote async stat(workspaceId: WorkspaceId, path: string, signal: AbortSignal): Promise<WorkspaceDocumentStatView>',
+        description: 'Report one document\'s identity and current version without its text.',
+        parameters: [{ name: 'workspaceId', description: 'registered Workspace the path is relative to.' }, { name: 'path', description: 'Workspace-relative path of the file to stat.' }, { name: 'signal', description: 'caller cancellation.' }],
+        returns: 'the document\'s version and size.',
+        throws: ['RemoteError when the path is outside the Workspace or is not a regular file.'],
+      },
+      {
+        signature: '@Remote async write( workspaceId: WorkspaceId, path: string, text: string, expected: WorkspaceWriteExpectation, signal: AbortSignal, ): Promise<WorkspaceDocumentStatView>',
+        description: 'Write one document\'s complete text under the caller\'s expectation.',
+        parameters: [{ name: 'workspaceId', description: 'registered Workspace the path is relative to.' }, { name: 'path', description: 'Workspace-relative path of the file to write.' }, { name: 'text', description: 'the complete new text.' }, { name: 'expected', description: 'the state the caller read, or a create-only request.' }, { name: 'signal', description: 'caller cancellation.' }],
+        returns: 'the document\'s new version and size.',
+        throws: ['RemoteError when the path is outside the Workspace, the content exceeds the cap, the expectation no longer holds, or the write policy refuses it.'],
+      },
+    ],
+  },
+  {
     key: 'workspaceFiles',
     summary: 'Host Remote file reads and workspace directory observations over the composed filesystem.',
     description: 'Host Remote file reads and workspace directory observations over the composed filesystem.',
@@ -5000,6 +5041,38 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'CronScheduleRecord',
     declaration: 'export interface CronScheduleRecord {\n    readonly id: ScheduleId;\n    readonly kind: \'cron\';\n    readonly title: string;\n    readonly prompt: string;\n    readonly expression: string;\n    readonly timeZone: string;\n    readonly scheduledAt: string;\n}',
+  },
+  {
+    name: 'CustomizationMcpServer',
+    declaration: 'export interface CustomizationMcpServer {\n    readonly entryId: string;\n    readonly serverName: string;\n    readonly transport: \'stdio\' | \'streamable-http\';\n    readonly target: string;\n    readonly enabled: boolean;\n    readonly fiberPhase: \'pending\' | \'loading\' | \'active\' | \'failed\' | \'unloading\' | null;\n    readonly tools: readonly CustomizationMcpTool[];\n    readonly manageable: boolean;\n}',
+  },
+  {
+    name: 'CustomizationMcpTool',
+    declaration: 'export interface CustomizationMcpTool {\n    readonly name: string;\n    readonly description: string;\n}',
+  },
+  {
+    name: 'CustomizationRuleFile',
+    declaration: 'export interface CustomizationRuleFile {\n    readonly name: string;\n    readonly path: string;\n    readonly scope: CustomizationRuleScope;\n    readonly bytes: number;\n}',
+  },
+  {
+    name: 'CustomizationRuleScope',
+    declaration: 'export type CustomizationRuleScope = \'user\' | \'project\';',
+  },
+  {
+    name: 'CustomizationSkill',
+    declaration: 'export interface CustomizationSkill {\n    readonly name: string;\n    readonly description: string;\n    readonly whenToUse?: string;\n    readonly path?: string;\n    readonly source: CustomizationSkillSource;\n    readonly provider: string;\n    readonly modelInvocable: boolean;\n    readonly userInvocable: boolean;\n    readonly presets: readonly string[];\n}',
+  },
+  {
+    name: 'CustomizationSkillSource',
+    declaration: 'export type CustomizationSkillSource = string;',
+  },
+  {
+    name: 'CustomizationsSnapshot',
+    declaration: 'export interface CustomizationsSnapshot {\n    readonly skillsAvailable: boolean;\n    readonly presets: readonly string[];\n    readonly skills: readonly CustomizationSkill[];\n    readonly skillsTruncated: boolean;\n    readonly mcpServers: readonly CustomizationMcpServer[];\n    readonly rules: readonly CustomizationRuleFile[];\n    readonly rulesTruncated: boolean;\n    readonly usage: CustomizationUsage;\n}',
+  },
+  {
+    name: 'CustomizationUsage',
+    declaration: 'export interface CustomizationUsage {\n    readonly instructionBytes: number;\n    readonly catalogBytes: number;\n    readonly estimatedTokens: number;\n    readonly budgetTokens: number;\n}',
   },
   {
     name: 'DailyInput',
@@ -8074,6 +8147,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface WorkspaceDirectoryListing {\n    readonly path: string;\n    readonly entries: readonly WorkspaceDirectoryEntry[];\n    readonly truncated: boolean;\n}',
   },
   {
+    name: 'WorkspaceDocumentStatView',
+    declaration: 'export interface WorkspaceDocumentStatView {\n    readonly path: string;\n    readonly absolutePath: string;\n    readonly version: string;\n    readonly bytes: number;\n}',
+  },
+  {
+    name: 'WorkspaceDocumentView',
+    declaration: 'export interface WorkspaceDocumentView extends WorkspaceDocumentStatView {\n    readonly text: string;\n}',
+  },
+  {
     name: 'WorkspaceFileBytes',
     declaration: 'export interface WorkspaceFileBytes<Data extends Uint8Array = Uint8Array> extends WorkspaceFileStat {\n    readonly offset: number;\n    readonly data: Data;\n    readonly eof: boolean;\n}',
   },
@@ -8152,6 +8233,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'WorkspaceView',
     declaration: 'export interface WorkspaceView {\n    readonly workspaceId: WorkspaceId;\n    readonly path: string;\n    readonly title: string;\n    readonly sessionIds: readonly SessionId[];\n    readonly createdAt: string;\n    readonly updatedAt: string;\n}',
+  },
+  {
+    name: 'WorkspaceWriteExpectation',
+    declaration: 'export type WorkspaceWriteExpectation = {\n    readonly kind: \'replaceIfVersion\';\n    readonly version: string;\n} | {\n    readonly kind: \'createIfAbsent\';\n};',
   },
 ]
 

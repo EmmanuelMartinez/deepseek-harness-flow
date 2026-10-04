@@ -284,6 +284,7 @@
     { "path": "./packages/api/settings-controller" },
     { "path": "./packages/api/git-controller" },
     { "path": "./packages/api/workspace-editor" },
+    { "path": "./packages/api/customizations-controller" },
     { "path": "./packages/api/workspace-controller/tsconfig.host.json" },
     { "path": "./packages/typert/loader" },
     { "path": "./packages/session/session-persistence" },

@@ -29,6 +29,7 @@ import terminalRemote from '@deepseek-ai/dsh-api-terminal-controller/remote'
 import workspaceFilesRemote from '@deepseek-ai/dsh-api-workspace-files/remote'
 import gitRemote from '@deepseek-ai/dsh-api-git-controller/remote'
 import workspaceEditorRemote from '@deepseek-ai/dsh-api-workspace-editor/remote'
+import customizationsRemote from '@deepseek-ai/dsh-api-customizations-controller/remote'
 import type { ClientRemote } from '@deepseek-ai/dsh-api-gateway/client'
 
 export type { ClientRemote } from '@deepseek-ai/dsh-api-gateway/client'
@@ -69,6 +70,8 @@ export type * from '@deepseek-ai/dsh-api-workspace-files/types'
 export type {} from '@deepseek-ai/dsh-api-git-controller/remote'
 export type * from '@deepseek-ai/dsh-api-git-controller/types'
 export type {} from '@deepseek-ai/dsh-api-workspace-editor/remote'
+export type * from '@deepseek-ai/dsh-api-customizations-controller/types'
+export type {} from '@deepseek-ai/dsh-api-customizations-controller/remote'
 export type * from '@deepseek-ai/dsh-api-workspace-editor/types'
 export type {} from '@deepseek-ai/dsh-api-terminal-controller/remote'
 export type * from '@deepseek-ai/dsh-api-terminal-controller/types'
@@ -190,7 +193,7 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
       pluginInventoryRemote, pluginManagerRemote, pluginRegistryProbeRemote, messageFeedbackRemote, sessionFeedbackRemote,
       fileUploadsRemote, sessionReferencesRemote,
       permissionPresetsRemote, subagentsRemote, sessionRemote, jobRemote, workspaceRemote, workspaceFilesRemote, terminalRemote,
-      gitRemote, workspaceEditorRemote,
+      gitRemote, workspaceEditorRemote, customizationsRemote,
       officeToPdfRemote, userQuestionsRemote,
     ]) {
       disposers.push(await ctx.remote.$mount(contribution))

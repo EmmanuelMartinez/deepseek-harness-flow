@@ -142,6 +142,8 @@ export const SERVICE_PAGE: Record<string, string> = {
   workspaceChanges: 'deliverables.md',
   terminalController: 'workspace.md',
   directoryPickerController: 'workspace.md',
+  workspaceEditor: 'workspace.md',
+  customizations: 'settings.md',
 }
 
 /**
@@ -175,6 +177,7 @@ export const SERVICE_WALK_EXEMPTIONS: Record<string, string> = {
   pluginPackages: 'profile-boot-owned package resolver service used by optional consumers — packages/boot/app-boot/README.md owns this internal API',
   fileUpload: 'client-side browser upload service — packages/client/file-upload/README.md owns the API',
   uiRenderer: 'client-side interface-typed browser service — packages/client/ui-renderer/README.md owns the API',
+  editorNavigation: 'client-side document-opening seam — packages/client/ui-editor/README.md owns the API',
   uiSession: 'client-side Session source adapter — packages/client/ui-session/README.md owns the API',
   uiConversation: 'client-side Conversation registries and assembler — packages/client/ui-conversation/README.md owns the API',
   uiWorkspace: 'client-side Workspace navigation adapter — packages/client/ui-workspace/README.md owns the API',
@@ -863,6 +866,10 @@ export const TYPE_LINK_EXEMPTIONS: Readonly<Record<string, string>> = {
   AsyncDisposable: 'TypeScript explicit resource management interface',
   AgentPresetDocument: 'preset composition view is owned by packages/preset/agent-preset-registry/README.md',
   AgentPresetComposition: 'flattened composition rows are owned by packages/preset/agent-preset-registry/README.md',
+  CustomizationsSnapshot: 'Customizations inventory payload is owned by packages/api/customizations-controller/README.md',
+  WorkspaceDocumentView: 'Workspace document payload is owned by packages/api/workspace-editor/README.md',
+  WorkspaceDocumentStatView: 'Workspace document stat payload is owned by packages/api/workspace-editor/README.md',
+  WorkspaceWriteExpectation: 'Workspace write precondition is owned by packages/api/workspace-editor/README.md',
   PresetMetadata: 'preset display text is owned by packages/preset/agent-preset-registry/README.md',
   BashEnvContributor: 'service-local extension type is owned by packages/shell/tool-bash/src/index.ts',
   BashEnvVariableInfo: 'service-local metadata type is owned by packages/shell/tool-bash/src/index.ts',

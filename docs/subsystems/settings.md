@@ -22,6 +22,27 @@ A form namespace is the local id of a uniquely addressed entry in the active pro
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
+<a id="ctxcustomizations--customizationscontroller"></a>
+
+### `ctx.customizations` — `CustomizationsController`
+
+Host Remote owner of the `customizations` namespace.
+
+```ts cordis-catalog
+/**
+ * Read every Skill, MCP server, and instruction file the current composition holds.
+ *
+ * The read has no Session: skills are merged across the composed presets and
+ * the global layer, MCP rows are read from the Loader wherever they were
+ * declared, and instruction files are probed from the first registered
+ * Workspace directory.
+ * @returns the merged catalog, the MCP rows, the instruction chain, and the estimate.
+ */
+@Remote('snapshot') async snapshot(): Promise<CustomizationsSnapshot>
+```
+
+Source: [`packages/api/customizations-controller/src/index.ts`](../../packages/api/customizations-controller/src/index.ts)
+
 <a id="ctxsettings--settingsforms"></a>
 
 ### `ctx.settings` — `SettingsForms`

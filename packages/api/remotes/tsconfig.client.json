@@ -88,6 +88,9 @@
       "path": "../git-controller"
     },
     {
+      "path": "../customizations-controller"
+    },
+    {
       "path": "../workspace-editor"
     },
     {

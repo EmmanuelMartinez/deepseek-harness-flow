@@ -180,6 +180,41 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-tool-presentation -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-api-customizations-controller -->
+<a id="deepseek-aidsh-api-customizations-controller"></a>
+
+## `@deepseek-ai/dsh-api-customizations-controller`
+
+- `inject`: `loader` · `tools`
+- `source`: [`packages/api/customizations-controller/src/index.ts:96`](../packages/api/customizations-controller/src/index.ts)
+
+```ts config-catalog
+/** Deployment bounds and estimates for one snapshot. */
+export interface Config {
+  /** Skills one snapshot returns; a larger catalog is cut and reported truncated. */
+  readonly maxSkills: number
+  /** MCP servers one snapshot returns. */
+  readonly maxMcpServers: number
+  /** Tools listed per MCP server. */
+  readonly maxMcpTools: number
+  /** Instruction files one snapshot returns. */
+  readonly maxRuleFiles: number
+  /** Ancestor directories the project-root probe may visit. */
+  readonly maxRuleLevels: number
+  /** Bytes one estimated token stands for. */
+  readonly bytesPerToken: number
+  /** Customization token budget the estimate is compared against. */
+  readonly budgetTokens: number
+  /** Directory entry that marks the project root while walking upward. */
+  readonly projectMarker: string
+  /** Ordered same-directory instruction-file candidates. */
+  readonly instructionFileCandidates: string[]
+  /** Ordered same-directory overlay candidates, loaded after the base files. */
+  readonly localInstructionFileCandidates: string[]
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-api-customizations-controller -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-api-gateway -->
 <a id="deepseek-aidsh-api-gateway"></a>
 
@@ -198,6 +233,33 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-api-gateway -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-api-git-controller -->
+<a id="deepseek-aidsh-api-git-controller"></a>
+
+## `@deepseek-ai/dsh-api-git-controller`
+
+- `inject`: `fs` · `subprocess` · `workspaceRegistry`
+- `source`: [`packages/api/git-controller/src/index.ts:67`](../packages/api/git-controller/src/index.ts)
+
+```ts config-catalog
+/** Deployment bounds on what one call reads and returns. */
+export interface Config {
+  /** Milliseconds one git command may run before its deadline aborts it. */
+  readonly timeoutMs: number
+  /** Bytes of one command's stdout retained; a larger stream is reported cut. */
+  readonly outputMaxBytes: number
+  /** Refs one read keeps; the rest is dropped and reported cut. */
+  readonly maxRefs: number
+  /** Changed paths one status response keeps. */
+  readonly maxStatusEntries: number
+  /** Commits one history page returns when the request names no limit. */
+  readonly maxLogPage: number
+  /** Files one commit detail keeps. */
+  readonly maxCommitFiles: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-api-git-controller -->
 
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-api-job-controller -->
 <a id="deepseek-aidsh-api-job-controller"></a>
@@ -315,6 +377,30 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-api-workspace-controller -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-api-workspace-editor -->
+<a id="deepseek-aidsh-api-workspace-editor"></a>
+
+## `@deepseek-ai/dsh-api-workspace-editor`
+
+- `inject`: `fs` · `sandboxPolicy` · `workspaceRegistry`
+- `refs`: [`SandboxMode`](subsystems/sandbox.zh.md)
+- `source`: [`packages/api/workspace-editor/src/index.ts:53`](../packages/api/workspace-editor/src/index.ts)
+
+```ts config-catalog
+/** Deployment bounds on one document. */
+export interface Config {
+  /** Inclusive byte cap on one document, for both a read and a write. */
+  readonly maxFileBytes: number
+  /**
+   * Sandbox policy the user's own edits run under. `read-only` refuses every
+   * write; the default performs them under the user's authority, confined to
+   * the Workspace by this controller.
+   */
+  readonly writeMode: SandboxMode
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-api-workspace-editor -->
 
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-api-workspace-files -->
 <a id="deepseek-aidsh-api-workspace-files"></a>
@@ -4352,6 +4438,8 @@ export interface Config {
 | `@deepseek-ai/dsh-client-ui-deliverables` | `systemPrompt` · `connection` · `sessionQuery` · `sessionController` · `workspaceFiles` · `fs` · `sandboxPolicy` · `workspaceChanges` | [`packages/client/ui-deliverables/src/index.ts`](../packages/client/ui-deliverables/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-directory-picker-browse` | — | [`packages/client/ui-directory-picker-browse/src/index.ts`](../packages/client/ui-directory-picker-browse/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-directory-picker-native` | — | [`packages/client/ui-directory-picker-native/src/index.ts`](../packages/client/ui-directory-picker-native/src/index.ts) |
+| `@deepseek-ai/dsh-client-ui-editor` | — | [`packages/client/ui-editor/src/index.ts`](../packages/client/ui-editor/src/index.ts) |
+| `@deepseek-ai/dsh-client-ui-git` | — | [`packages/client/ui-git/src/index.ts`](../packages/client/ui-git/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-goal` | — | [`packages/client/ui-goal/src/index.ts`](../packages/client/ui-goal/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-input-trigger` | — | [`packages/client/ui-input-trigger/src/index.ts`](../packages/client/ui-input-trigger/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-jobs` | — | [`packages/client/ui-jobs/src/index.ts`](../packages/client/ui-jobs/src/index.ts) |
@@ -4367,6 +4455,7 @@ export interface Config {
 | `@deepseek-ai/dsh-client-ui-session` | — | [`packages/client/ui-session/src/index.ts`](../packages/client/ui-session/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-settings` | — | [`packages/client/ui-settings/src/index.ts`](../packages/client/ui-settings/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-settings-agent-loop` | — | [`packages/client/ui-settings-agent-loop/src/index.ts`](../packages/client/ui-settings-agent-loop/src/index.ts) |
+| `@deepseek-ai/dsh-client-ui-settings-customizations` | — | [`packages/client/ui-settings-customizations/src/index.ts`](../packages/client/ui-settings-customizations/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-settings-general` | — | [`packages/client/ui-settings-general/src/index.ts`](../packages/client/ui-settings-general/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-settings-plugin-inventory` | — | [`packages/client/ui-settings-plugin-inventory/src/index.ts`](../packages/client/ui-settings-plugin-inventory/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-settings-plugins` | — | [`packages/client/ui-settings-plugins/src/index.ts`](../packages/client/ui-settings-plugins/src/index.ts) |
@@ -4483,6 +4572,7 @@ export interface Config {
 | `@deepseek-ai/dsh-experimental-voice-input-bundle` | — | [`packages/experimental/voice-input-bundle/src/index.ts`](../packages/experimental/voice-input-bundle/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-webworker-packer` | — | [`packages/experimental/webworker-packer/src/index.ts`](../packages/experimental/webworker-packer/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-webworker-runtime` | — | [`packages/experimental/webworker-runtime/src/index.ts`](../packages/experimental/webworker-runtime/src/index.ts) |
+| `@deepseek-ai/dsh-git-command` | — | [`packages/git/git-command/src/index.ts`](../packages/git/git-command/src/index.ts) |
 | `@deepseek-ai/dsh-home-paths` | — | [`packages/util/home-paths/src/index.ts`](../packages/util/home-paths/src/index.ts) |
 | `@deepseek-ai/dsh-hook-protocol` | — | [`packages/hooks/hook-protocol/src/index.ts`](../packages/hooks/hook-protocol/src/index.ts) |
 | `@deepseek-ai/dsh-http-proxy` | — | [`packages/util/http-proxy/src/index.ts`](../packages/util/http-proxy/src/index.ts) |

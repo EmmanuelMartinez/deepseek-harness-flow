@@ -116,6 +116,7 @@
     { "path": "./packages/client/ui-goal" },
     { "path": "./packages/client/ui-git" },
     { "path": "./packages/client/ui-editor" },
+    { "path": "./packages/client/ui-settings-customizations" },
     { "path": "./packages/client/ui-message-feedback" },
     { "path": "./packages/client/ui-model-selection" },
     { "path": "./packages/client/ui-agent-preset" },
