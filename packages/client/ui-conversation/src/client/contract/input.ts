@@ -174,6 +174,12 @@ export interface InputTarget {
 
 /** Per-session input facade owned by the conversation wiring layer. */
 export interface SessionInput extends InputTarget {
+  /**
+   * Insert one structured reference at the caret the composer last reported.
+   * Absent in a composition whose input pipeline predates the capability.
+   * @param reference - the reference to insert; a draft with no caret yet ignores it.
+   */
+  insertReferenceAtCaret?(reference: ReferenceInsert): void
   /** Replace the whole draft (persisted-draft seed and programmatic writes). */
   setDraft(text: string): void
   /** Append ordered browser-owned attachment ids; busy admission phases refuse. */
@@ -229,6 +235,12 @@ export interface InputActions {
    * @returns false when the draft changed or submission locked the editor.
    */
   insertText(text: string, span: TokenSpan): boolean
+  /**
+   * Insert one structured reference at the caret the composer last reported.
+   * Absent in a composition whose input pipeline predates the capability.
+   * @param reference - the reference to insert; a draft with no caret yet ignores it.
+   */
+  insertReferenceAtCaret?(reference: ReferenceInsert): void
   /** Replace the whole draft (persisted-draft seed and programmatic writes). */
   setDraft(text: string): void
   /** Append ordered browser-owned attachment ids; busy admission phases refuse. */

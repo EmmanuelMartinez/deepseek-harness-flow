@@ -17,7 +17,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import type { ChangeEvent, KeyboardEvent, MouseEvent } from 'react'
 import clsx from 'clsx'
 import {
-  IconPlusOutlineMedium, IconWarningOutlineRegular, Toast, Tooltip,
+  IconPlusOutlineMedium, IconWarningOutlineRegular, Toast, Tooltip, readFilePathDrag,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 // Type-only: the `plan` projection key merge (the TodoDock posture — the
 // composer reads a host-computed value; the domain owns the key).
@@ -39,6 +39,16 @@ import { attachmentErrorText, imageSizeText } from '../image-labels.ts'
 import { ContextMeter } from './ContextMeter.tsx'
 import { observeControlRow } from './control-row-layout.ts'
 import css from './InputBar.module.css'
+
+/**
+ * The `@` mention one dropped path becomes: the path a tree names, quoted when
+ * it holds a space.
+ * @param path - the dropped path, as the source surface named it.
+ * @returns the mention text a reference carries.
+ */
+function referenceMention(path: string): string {
+  return path.includes(' ') ? `@"${path}"` : `@${path}`
+}
 
 export type InputBarProps = ComposerBarProps
 
@@ -234,6 +244,23 @@ export const InputBar = memo(function InputBar({
 
   const canAcceptDrop = subagent === null && !locked && !machineBusy && addFiles !== undefined
 
+  // A drag that started inside the app names a workspace path, so it becomes a
+  // reference chip rather than an uploaded attachment; an OS file drag keeps
+  // the attachment intake below.
+  const dropDroppedReference = (dataTransfer: DataTransfer | null): boolean => {
+    const path = readFilePathDrag(dataTransfer)
+    if (path === undefined || inputActions?.insertReferenceAtCaret === undefined) return false
+    const mention = referenceMention(path)
+    inputActions.insertReferenceAtCaret({
+      source: 'reference',
+      ref: mention,
+      label: path.split('/').pop() ?? path,
+      appearance: 'file',
+      clipboardText: mention,
+    })
+    return true
+  }
+
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const onPickFiles = (e: ChangeEvent<HTMLInputElement>): void => {
     const picked = e.target.files === null ? [] : [...e.target.files]
@@ -378,6 +405,14 @@ export const InputBar = memo(function InputBar({
         data-composer-card
         onClick={workspaceTrigger ? onRequestWorkspace : undefined}
         onPointerDown={workspaceTrigger ? (e) => { e.stopPropagation() } : undefined}
+        onDragOver={(event) => {
+          if (readFilePathDrag(event.dataTransfer) === undefined) return
+          event.preventDefault()
+          event.dataTransfer.dropEffect = 'copy'
+        }}
+        onDrop={(event) => {
+          if (dropDroppedReference(event.dataTransfer)) event.preventDefault()
+        }}
       >
         {sessionId !== undefined && (
           <div className={css.overlayAnchor}>{renderSlot('conversation.input.overlay', {})}</div>

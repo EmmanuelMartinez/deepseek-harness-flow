@@ -50,6 +50,7 @@ function page(state: Omit<EditorState, 'gitAvailable'> & { readonly gitAvailable
   const toggleAutosave = vi.fn()
   const showDiff = vi.fn()
   const showEdit = vi.fn()
+  const select = vi.fn()
   const seats: PageSeats = {
     useEditor: bindSnapshotSelector(source({ gitAvailable: false, ...state })),
     activate,
@@ -60,6 +61,7 @@ function page(state: Omit<EditorState, 'gitAvailable'> & { readonly gitAvailable
     toggleAutosave,
     showDiff,
     showEdit,
+    select,
     t: makeTranslate(zh),
   }
   return {

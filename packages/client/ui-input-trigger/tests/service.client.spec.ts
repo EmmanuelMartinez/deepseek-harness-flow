@@ -611,7 +611,7 @@ describe('pick / scoped input events', () => {
       return true
     })
     // Untagged root listeners are admitted globally (the carrier contract).
-    root.on('slash/input-begin-command', (req) => { rootSeen.push(req) })
+    root.on('slash/input-begin-command', req => void rootSeen.push(req))
     controller.track('/g', 2, { tier: 'plain' }, 3)
     await tick()
     controller.pick('command', 0)

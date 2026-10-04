@@ -70,4 +70,10 @@ export interface EditorInjected {
    * @param id - tab identity.
    */
   readonly showEdit: (id: string) => void
+  /**
+   * Report the active buffer's selection, so a shortcut can name its lines.
+   * @param start - selection start offset in the buffer.
+   * @param end - selection end offset in the buffer.
+   */
+  readonly select: (start: number, end: number) => void
 }

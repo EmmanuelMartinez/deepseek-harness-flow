@@ -96,7 +96,7 @@ function DiffView({ document, t }: {
  * @returns the page element.
  */
 export function EditorPage({
-  useEditor, activate, close, edit, save, reload, toggleAutosave, showDiff, showEdit, t,
+  useEditor, activate, close, edit, save, reload, toggleAutosave, showDiff, showEdit, select, t,
 }: EditorPageProps): ReactNode {
   const state = useEditor(snapshot => snapshot)
   const active = state.documents.find(document => document.id === state.active)
@@ -214,6 +214,7 @@ export function EditorPage({
                 spellCheck={false}
                 value={active.text}
                 onChange={(event) => { edit(active.id, event.target.value) }}
+                onSelect={(event) => { select(event.currentTarget.selectionStart, event.currentTarget.selectionEnd) }}
                 onKeyDown={onKeyDown}
               />
             )}

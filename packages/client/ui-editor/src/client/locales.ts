@@ -25,6 +25,8 @@ export const zh = {
   untrackedFile: '未跟踪文件',
   binary: '二进制文件没有可显示的行。',
   truncated: '已按配置的上限截断。',
+  'shortcut.reference': '把当前文件的引用插入输入框',
+  'shortcut.referenceUnavailable': '没有可引用的文件或会话',
 } satisfies Record<string, string>
 
 /** Editor panel locale key union. */
@@ -55,4 +57,6 @@ export const en = {
   untrackedFile: 'Untracked file',
   binary: 'A binary file has no lines to show.',
   truncated: 'Cut at the configured limit.',
+  'shortcut.reference': 'Insert a reference to the open file',
+  'shortcut.referenceUnavailable': 'No open file or session to reference',
 } satisfies Record<EditorLocaleKey, string>

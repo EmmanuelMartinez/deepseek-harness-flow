@@ -144,7 +144,9 @@ export function apply(ctx: ClientContext): void {
     },
     openReference(session, { ref, appearance }) {
       if (appearance !== 'file') return false
-      const path = ref.startsWith('@"') ? ref.slice(2, -1) : ref.slice(1)
+      // A reference may name the lines it points at (`@path#L24-L30`); the
+      // fragment is guidance for the reader, not part of the file's path.
+      const path = (ref.startsWith('@"') ? ref.slice(2, -1) : ref.slice(1)).replace(/#L\d+(?:-L?\d+)?$/u, '')
       const cwd = sessions.list.getSnapshot().byId[session.sessionId]?.cwd
       ctx.sidebarRight.openResource(fileAddressFor(session.sessionId, cwd, path))
       return true

@@ -3,6 +3,7 @@
  */
 
 export type { CodeToolbarLabels } from './CodeToolbar.tsx'
+export { FILE_PATH_DRAG_MIME, readFilePathDrag, writeFilePathDrag } from './file-drag.ts'
 export { StateDot } from './StateDot.tsx'
 export type { StateDotState } from './StateDot.tsx'
 export { DisclosureRow } from './DisclosureRow.tsx'

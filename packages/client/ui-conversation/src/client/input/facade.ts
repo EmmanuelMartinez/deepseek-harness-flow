@@ -121,6 +121,7 @@ export class SessionInputShell implements SessionInput {
   }
   /** The public provide-channel action face (one stable identity per session). */
   readonly actions: InputActions = {
+    insertReferenceAtCaret: (reference) => { this.insertReferenceAtCaret(reference) },
     captureInsertion: () => ({ ...this.caretSpan(), draftRev: this.rev }),
     insertText: (text, span) => {
       if (this.snapshot.phase === 'adjudicating' || this.snapshot.phase === 'submitting' || this.disposed) return false
@@ -212,6 +213,14 @@ export class SessionInputShell implements SessionInput {
    * end. Merged into history so a seed is not an undoable step of its own.
    * @param text - the full next draft.
    */
+  /**
+   * Insert one structured reference at the caret the composer last reported.
+   * @param reference - the reference to insert; a draft with no caret yet ignores it.
+   */
+  insertReferenceAtCaret(reference: ReferenceInsert): void {
+    this.insertReference(reference, { ...this.caretSpan(), draftRev: this.rev })
+  }
+
   setDraft(text: string): void {
     this.draftEditor.setDraft(text)
   }

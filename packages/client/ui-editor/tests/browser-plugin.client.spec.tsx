@@ -21,6 +21,17 @@ afterEach(cleanup)
 
 const WORKSPACE = 'ws-one' as WorkspaceId
 
+/** The session rows and bindings one bench scripts for the reference shortcut. */
+interface BenchSessions {
+  list: {
+    getSnapshot: () => {
+      byId: Record<string, { id: string; cwd?: string; retainedBy?: Record<string, number> }>
+    }
+    subscribe: () => () => void
+  }
+  binding: (id: string) => { ctx: Context } | undefined
+}
+
 /** One bench: the slot registry, the locale runtime, and scripted document reads. */
 async function bench() {
   const ctx = new Context()
@@ -44,13 +55,43 @@ async function bench() {
   new TestRemote(ctx, { workspaceEditor })
   const selectPanel = vi.fn()
   ctx.provide('layout', { selectPanel } as never)
+  const shortcutCommands: unknown[] = []
+  ctx.provide('shortcuts', {
+    register: (command: unknown) => { shortcutCommands.push(command); return () => undefined },
+  } as never)
+  const sessions: BenchSessions = {
+    list: { getSnapshot: () => ({ byId: {} }), subscribe: () => () => undefined },
+    binding: () => undefined,
+  }
+  ctx.provide('sessions', sessions as never)
+  let binding: { key: string | undefined; hooks: object; keyedHooks: object; props: Record<string, unknown> } =
+    { key: undefined, hooks: {}, keyedHooks: {}, props: {} }
+  const listeners = new Set<() => void>()
+  const current = {
+    getSnapshot: () => binding,
+    subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } },
+  }
+  ctx.provide('uiSession', { adapter: { current } } as never)
+  /** Publish the conversation binding the editor delivers a pending reference into. */
+  const publishInput = (actions: unknown): void => {
+    binding = { ...binding, props: { inputActions: actions } }
+    for (const listener of [...listeners]) listener()
+  }
   ctx.provide('workspaces', {
     list: {
       getSnapshot: () => ({ items: [{ workspaceId: WORKSPACE, path: '/w' }] }),
       subscribe: () => () => undefined,
     },
   } as never)
-  return { ctx, slots: ctx.get('slots') as SlotRegistry, workspaceEditor, selectPanel }
+  return {
+    ctx,
+    slots: ctx.get('slots') as SlotRegistry,
+    workspaceEditor,
+    selectPanel,
+    shortcutCommands,
+    sessions,
+    publishInput,
+  }
 }
 
 /** Declare the shell slots this plugin contributes to. */
@@ -76,11 +117,8 @@ describe('ui-editor browser plugin', () => {
     expect(pages[0]?.component).toBe(EditorPage)
     expect(pages[0]?.options).toMatchObject({ key: PANEL_ID })
     expect(pages[0]?.locale).toBe(NS)
-    const icons = b.slots.entries('sidebar.panellist')
-    expect(icons).toHaveLength(1)
-    expect(icons[0]?.component).toBe(EditorPanelIcon)
-    expect(icons[0]?.options).toMatchObject({ id: PANEL_ID, order: 15 })
-    // The frame's right rail offers the same tool with the same glyph.
+    // The left sidebar carries no Editor entry: the frame's right rail is the
+    // only place this tool is offered.
     const rail = b.slots.entries('rightrail')
     expect(rail).toHaveLength(1)
     expect(rail[0]?.component).toBe(EditorPanelIcon)
@@ -105,6 +143,83 @@ describe('ui-editor browser plugin', () => {
       expect(face.hooks.editor.getSnapshot().documents[0]?.text).toBe('first\n')
     })
     expect(b.workspaceEditor.read).toHaveBeenCalledWith(WORKSPACE, 'dir/notes.txt')
+  })
+
+  it('returns to the conversation and delivers the open file once its input is up', async () => {
+    const b = await bench()
+    declare(b.slots)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const navigation = b.ctx.get('editorNavigation')
+    if (navigation === undefined) throw new Error('the plugin published no editor navigation')
+    expect(navigation.open('/w/dir/notes.txt')).toBe(true)
+    const command = b.shortcutCommands[0] as {
+      resolve: () => { status: string; run?: () => void }
+    }
+    await vi.waitFor(() => { expect(command.resolve().status).toBe('handled') })
+    const insertReferenceAtCaret = vi.fn()
+    b.publishInput({ insertReferenceAtCaret })
+    command.resolve().run?.()
+    expect(b.selectPanel).toHaveBeenCalledWith(null)
+    expect(insertReferenceAtCaret).toHaveBeenCalledWith({
+      source: 'reference',
+      ref: '@dir/notes.txt',
+      label: 'notes.txt',
+      appearance: 'file',
+      clipboardText: '@dir/notes.txt',
+    })
+  })
+
+  it('names the selected lines in the reference and in its label', async () => {
+    const b = await bench()
+    declare(b.slots)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const navigation = b.ctx.get('editorNavigation')
+    if (navigation === undefined) throw new Error('the plugin published no editor navigation')
+    expect(navigation.open('/w/dir/notes.txt')).toBe(true)
+    const face = (b.slots.entries('main')[0]?.inject as (() => EditorInjected) | undefined)?.()
+    if (face === undefined) throw new Error('the main entry carries no injected face')
+    await vi.waitFor(() => { expect(face.hooks.editor.getSnapshot().documents[0]?.text).toBe('first\n') })
+    face.select(0, 6)
+
+    const insertReferenceAtCaret = vi.fn()
+    b.publishInput({ insertReferenceAtCaret })
+    const command = b.shortcutCommands[0] as { resolve: () => { status: string; run?: () => void } }
+    command.resolve().run?.()
+    expect(insertReferenceAtCaret).toHaveBeenCalledWith(expect.objectContaining({
+      ref: '@dir/notes.txt#L1-L2',
+      label: 'notes.txt:1-2',
+    }))
+  })
+
+  it('holds the reference until the input exists, then delivers it', async () => {
+    const b = await bench()
+    declare(b.slots)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const navigation = b.ctx.get('editorNavigation')
+    if (navigation === undefined) throw new Error('the plugin published no editor navigation')
+    expect(navigation.open('/w/dir/notes.txt')).toBe(true)
+    const command = b.shortcutCommands[0] as { resolve: () => { status: string; run?: () => void } }
+    await vi.waitFor(() => { expect(command.resolve().status).toBe('handled') })
+    command.resolve().run?.()
+
+    const insertReferenceAtCaret = vi.fn()
+    b.publishInput({ insertReferenceAtCaret })
+    expect(insertReferenceAtCaret).toHaveBeenCalledWith(expect.objectContaining({ ref: '@dir/notes.txt' }))
+  })
+
+  it('blocks the shortcut until a document is open, and delivers nothing without the gesture', async () => {
+    const b = await bench()
+    declare(b.slots)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const command = b.shortcutCommands[0] as { resolve: () => { status: string } }
+    expect(command.resolve()).toMatchObject({ status: 'blocked' })
+    const navigation = b.ctx.get('editorNavigation')
+    if (navigation === undefined) throw new Error('the plugin published no editor navigation')
+    expect(navigation.open('/w/dir/notes.txt')).toBe(true)
+    await vi.waitFor(() => { expect(command.resolve().status).toBe('handled') })
+    const insertReferenceAtCaret = vi.fn()
+    b.publishInput({ insertReferenceAtCaret })
+    expect(insertReferenceAtCaret).not.toHaveBeenCalled()
   })
 
   it('leaves a path outside every workspace to the caller', async () => {

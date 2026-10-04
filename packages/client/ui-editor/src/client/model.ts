@@ -82,6 +82,8 @@ export interface EditorState {
   readonly documents: readonly EditorDocument[]
   /** The active document's id; absent when none is open. */
   readonly active?: string
+  /** The active buffer's selection offsets, from the last gesture in the textarea. */
+  readonly selection?: { readonly start: number; readonly end: number }
   /** Whether a save follows a pause in typing. */
   readonly autosave: boolean
   /** Whether the composition mounts the git controller, so a comparison can be asked for. */
@@ -210,6 +212,17 @@ export class EditorModel implements HostObservable<EditorState> {
   activate(id: string): void {
     if (this.state.active === id || !this.state.documents.some(document => document.id === id)) return
     this.publish({ ...this.state, active: id })
+  }
+
+  /**
+   * Remember the active buffer's selection, so a shortcut can name its lines.
+   * @param start - selection start offset in the buffer.
+   * @param end - selection end offset in the buffer.
+   */
+  select(start: number, end: number): void {
+    const selection = this.state.selection
+    if (selection?.start === start && selection.end === end) return
+    this.publish({ ...this.state, selection: { start, end } })
   }
 
   /**

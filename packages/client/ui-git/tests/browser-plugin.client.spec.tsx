@@ -14,7 +14,6 @@ import { TestRemote, usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-t
 import type { WorkspaceId } from '@deepseek-ai/dsh-api-remotes/client'
 import { apply, inject, NS, PANEL_ID } from '../src/client/index.ts'
 import { GitPage } from '../src/client/GitPage.tsx'
-import { GitPanelIcon } from '../src/client/GitPanelIcon.tsx'
 import { GitRailIcon } from '../src/client/GitRailIcon.tsx'
 import type { GitPanelInjected } from '../src/client/slots.ts'
 
@@ -89,11 +88,8 @@ describe('ui-git browser plugin', () => {
     expect(pages[0]?.component).toBe(GitPage)
     expect(pages[0]?.options).toMatchObject({ key: PANEL_ID })
     expect(pages[0]?.locale).toBe(NS)
-    const icons = b.slots.entries('sidebar.panellist')
-    expect(icons).toHaveLength(1)
-    expect(icons[0]?.component).toBe(GitPanelIcon)
-    expect(icons[0]?.options).toMatchObject({ id: PANEL_ID, order: 20 })
-    // The frame's right rail offers the same tool with the same glyph.
+    // The left sidebar carries no Source-control entry: the frame's right rail
+    // is the only place this tool is offered.
     const rail = b.slots.entries('rightrail')
     expect(rail).toHaveLength(1)
     expect(rail[0]?.component).toBe(GitRailIcon)

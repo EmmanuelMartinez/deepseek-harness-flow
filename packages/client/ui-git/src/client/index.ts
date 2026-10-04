@@ -17,7 +17,6 @@ import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import type {} from '@deepseek-ai/dsh-client-ui-editor/client'
 import { fileAddressFor } from '@deepseek-ai/dsh-util-workspace-path'
 import { GitPage } from './GitPage.tsx'
-import { GitPanelIcon } from './GitPanelIcon.tsx'
 import { GitRailIcon } from './GitRailIcon.tsx'
 import { createChangeCountSource, type ChangeCountSource } from './change-count.ts'
 import { createGitLive } from './live.ts'
@@ -138,14 +137,6 @@ export function apply(ctx: ClientContext): void {
     }, GitPage)
     yield () => { activeModel = undefined; model.dispose() }
   })
-
-  ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
-    name: 'sidebar.panellist',
-    id: PANEL_ID,
-    order: 20,
-    label: () => t('panel'),
-    locale: NS,
-  }, GitPanelIcon))
 
   // The frame's right rail offers the same tool: it owns the button and the
   // toggle, and this registration contributes the glyph with the changed-file
