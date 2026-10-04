@@ -68,7 +68,12 @@ describe('file upload worker body', () => {
     }
     const fetch = vi.fn(async (_url: string, init: RequestInit & { readonly duplex: 'half' }) => {
       const chunks: number[][] = []
-      for await (const chunk of init.body as ReadableStream<Uint8Array>) chunks.push([...chunk])
+      const reader = (init.body as ReadableStream<Uint8Array>).getReader()
+      let item = await reader.read()
+      while (!item.done) {
+        chunks.push([...item.value])
+        item = await reader.read()
+      }
       expect(chunks).toEqual([[1, 2], [3]])
       expect(init).toMatchObject({
         method: 'POST',

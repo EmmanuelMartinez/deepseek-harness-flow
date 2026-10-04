@@ -105,7 +105,7 @@ export class TeamService extends Service {
     this.tasks = new TeamTaskBoard(this.journal, this.config.maxTasks)
 
     ctx.on('session/event', (session, event) => { this.mailbox.observeSessionEvent(session, event) })
-    ctx.on('agent/created', ({ agent }) => { this.scheduleRecovery(agent) })
+    ctx.on('agent/created', ({ agent }) => void this.scheduleRecovery(agent))
     ctx.on('agent/status', ({ agent }) => {
       const membership = this.roster.tryMembership(agent)
       if (membership !== undefined) this.activity.notify(membership.id)

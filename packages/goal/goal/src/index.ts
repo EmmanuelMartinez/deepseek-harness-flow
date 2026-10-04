@@ -252,9 +252,7 @@ export class GoalService extends TypertRemoteService {
     this.resolved = {
       defaultMaxGoalRounds: resolveMaxGoalRounds(config.defaultMaxGoalRounds ?? 256),
     }
-    ctx.on('agent/created', ({ agent }) => {
-      this.setActivation(agent.session, 'disarmed')
-    })
+    ctx.on('agent/created', ({ agent }) => void this.setActivation(agent.session, 'disarmed'))
     ctx.sessionProjections.register(goalProjectionDefinition)
     ctx.on('session/event', (session, event) => {
       if (event.type !== 'goal/change') return

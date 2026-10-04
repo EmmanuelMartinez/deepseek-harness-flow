@@ -175,7 +175,7 @@ export class ScheduleService extends TypertRemoteService {
         () => agent.ctx.effect(() => registerScheduleTools(ctx, agent.ctx, agent)),
       ))
     }
-    ctx.on('agent/created', ({ agent }) => { attach(agent) })
+    ctx.on('agent/created', ({ agent }) => void attach(agent))
     ctx.on('agent/disposed', ({ agent }) => {
       const detach = attached.get(agent)
       if (detach === undefined) return
