@@ -32,6 +32,7 @@ export const zh = {
   'expand': '展开',
   'back': '返回',
   'brand.localBuild': 'DeepSeek Harness Flow',
+  'brand.shortName': 'DSH Flow',
   'workspace.defaultName': '默认工作区',
   'unknown': '未知',
   'none': '无',
