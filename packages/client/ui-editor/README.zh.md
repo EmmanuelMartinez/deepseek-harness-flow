@@ -7,11 +7,11 @@ kind: "package-reference"
 
 [English](README.md) | 中文
 
-## Summary
+## 概述
 
 Web 客户端的文档界面：一个侧边栏入口，配一个已打开文档的面板，每份文档都是某个 Workspace 文件上的可编辑缓冲区。保存是显式的——⌘S 或「保存」控件——而「自动保存」开关让保存改为跟随输入停顿发生。每次保存都回传缓冲区读到的版本，因此期间被 Agent 或另一个窗口改动的文件会报告为冲突，并提供重新读取，而不是被覆盖。
 
-## Table of Contents
+## 目录
 
 - [Use this package](#use-this-package)
 - [Understand the implementation](#understand-the-implementation)
@@ -23,7 +23,7 @@ Web 客户端的文档界面：一个侧边栏入口，配一个已打开文档�
 -----
 
 <a id="use-this-package"></a>
-## Use this package
+## 使用本包
 
 把本包挂载到同时具备侧边栏、框架 `rightrail` 座位、布局 `main` keyed slot 与 `workspaceEditor` Remote 命名空间的客户端组合中；Web 组合包在 `ui-git` 之后挂载它。侧边栏的**编辑器**入口与面板共用同一个 id，因此选中入口即打开面板，而侧边栏绘制自己的选中态。第二处注册把同一个工具放到框架的右轨上，由框架拥有那个按钮与它的切换：按一次打开面板，再按当前项则重新关闭。
 
@@ -36,7 +36,7 @@ Web 客户端的文档界面：一个侧边栏入口，配一个已打开文档�
 
 对比不需要额外的包：组合挂载了 `git` 命名空间时面板才会向它询问，并且只在那时提供「差异」开关。工作树中有改动的文件显示该改动；改动已经暂存的文件显示索引相对 HEAD；仓库中没有任何改动的文件会直接说明，而不是显示空视图。
 
-### Opening a document from another plugin
+### 从其他插件打开文档
 
 面板发布 `editorNavigation` 供把文件交给它的插件使用，调用方无需导入本包的值：
 
@@ -50,7 +50,7 @@ if (editor?.open('/home/me/project/packages/app/src/main.ts') !== true) {
 `open` 解析包含该绝对路径的 Workspace，选中编辑器面板并打开该文档，已打开时直接显示它。没有 Workspace 包含该路径时返回 `false`，版本控制面板与文件树因此退回各自的只读预览。
 
 <a id="understand-the-implementation"></a>
-## Understand the implementation
+## 理解实现
 
 <details>
 <summary>Implementation internals — click to expand</summary>
@@ -66,14 +66,15 @@ if (editor?.open('/home/me/project/packages/app/src/main.ts') !== true) {
 </details>
 
 <a id="further-exploration"></a>
-## Further Exploration
+## 进一步探索
 
 - [workspace-editor](../../api/workspace-editor/README.zh.md) — 本面板读写所经的 Host 命名空间。
 - [ui-sidebar](../ui-sidebar/README.zh.md) — 拥有入口按钮、标签与选中态的外壳。
 - [ui-layout](../ui-layout/README.zh.md) — 页面占据的 `main` keyed slot。
 - [ui-git](../ui-git/README.zh.md) — 把改动文件打开到这里的面板。
 
-## Model Experience
+<a id="model-experience"></a>
+## 模型体验
 
 None, as this package renders a browser panel and registers no prompt, tool, or session event.
 
@@ -81,7 +82,8 @@ None, as this package renders a browser panel and registers no prompt, tool, or 
 
 No direct effect; a person's edit reaches the filesystem, not a model request.
 
-## Known Limitations and Deferred Work
+<a id="known-limitations-and-deferred-work"></a>
+## 已知限制与延期工作
 
 - **纯文本缓冲区。** 没有语法高亮、补全或多光标；Tab 缩进两个空格，没有其他重排。共享高亮器已存在，留待后续版本。
 - **冲突时不合并。** 「重新加载」会丢弃本地缓冲区；协调两个版本是用户的工作。
@@ -91,7 +93,7 @@ No direct effect; a person's edit reaches the filesystem, not a model request.
 - **一次只有一种对比。** 同时存在已暂存与未暂存改动的文件显示持有工作树改动的那一侧，因此已暂存的部分不会在旁边显示。
 
 <a id="dev-note"></a>
-### Dev Note
+### 开发备注
 
 <details>
 <summary>Working context for maintainers — click to expand</summary>

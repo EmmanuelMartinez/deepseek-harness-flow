@@ -7,11 +7,11 @@ kind: "package-reference"
 
 [English](README.md) | 中文
 
-## Summary
+## 概述
 
 当编辑文件的是人而不是模型时使用本包。它读取一个 Workspace 文档并同时给出保存时必须回传的版本令牌，按需再次报告该身份，并且只在文件仍持有调用方读到的版本时才写入完整文本。路径相对已注册的 Workspace，越界即拒绝。`writeMode` 选择写入所用的沙箱策略，默认取用户自身的权限，因为本服务已经把目标限定在它点名的 Workspace 内。
 
-## Table of Contents
+## 目录
 
 - [Use this package](#use-this-package)
 - [Understand the implementation](#understand-the-implementation)
@@ -23,7 +23,7 @@ kind: "package-reference"
 -----
 
 <a id="use-this-package"></a>
-## Use this package
+## 使用本包
 
 把本包与 `dsh-fs`、`dsh-sandbox-policy` 和 Workspace 注册表挂载在一起；Web 组合包把它紧接在 Git Controller 之后挂载。每个方法都给出 `WorkspaceId` 与 Workspace 相对路径，因此客户端调用 `remote.workspaceEditor.read(workspaceId, path, signal)`、`stat(workspaceId, path, signal)` 或 `write(workspaceId, path, text, expected, signal)`，从不给出目录。
 
@@ -45,7 +45,7 @@ kind: "package-reference"
 | `maxFileBytes` | `4194304` | 单个文档的包含式字节上限，读取与写入同样适用。超出即拒绝，绝不截断。 |
 | `writeMode` | `danger-full-access` | 用户自身编辑所用的沙箱策略。`read-only` 拒绝每一次写入，读取不受影响。 |
 
-### Failures
+### 失败
 
 | 错误码 | 细节 | 含义 |
 |---|---|---|
@@ -60,7 +60,7 @@ kind: "package-reference"
 | `workspace/not-found` | `workspaceId` | 没有 Workspace 注册携带该标识。 |
 
 <a id="understand-the-implementation"></a>
-## Understand the implementation
+## 理解实现
 
 <details>
 <summary>Implementation internals — click to expand</summary>
@@ -76,14 +76,15 @@ Workspace 注册是唯一的路径权威。`ctx.workspaceRegistry.get` 解析根
 </details>
 
 <a id="further-exploration"></a>
-## Further Exploration
+## 进一步探索
 
 - [文件系统](../../fs/fs/README.zh.md) — 每次读取与写入经过的服务，以及本包依赖的写入意图。
 - [沙箱策略](../../sandbox/sandbox-policy/README.zh.md) — 写入所运行的已解析策略。
 - [Workspace 实体](../../workspace/workspace/README.zh.md) — 本服务据此解析根目录的注册。
 - [workspace-files](../workspace-files/README.zh.md) — 本包刻意没有扩展的只读姊妹包。
 
-## Model Experience
+<a id="model-experience"></a>
+## 模型体验
 
 None, as this package serves a person editing their own files and registers no prompt, tool, or session event.
 
@@ -91,7 +92,8 @@ None, as this package serves a person editing their own files and registers no p
 
 No direct effect; reading or writing a document does not alter model requests already in flight.
 
-## Known Limitations and Deferred Work
+<a id="known-limitations-and-deferred-work"></a>
+## 已知限制与延期工作
 
 - **没有轮次记账。** 用户的编辑不会记录为 Session 事件，与终端一致：日志是 Agent 的记录，不是击键日志。因此一轮的改动文件卡片报告的是 git 在自己快照点看到的内容，而不是谁写的。
 - **只报告冲突，绝不合并。** 过期的保存会带着当前版本被拒绝；合并两个文本版本是调用方的决定。
@@ -100,7 +102,7 @@ No direct effect; reading or writing a document does not alter model requests al
 - **部署策略较粗。** Host 上所有 Workspace 共用一个 `writeMode`；按 Workspace 的策略需要更丰富的请求。
 
 <a id="dev-note"></a>
-### Dev Note
+### 开发备注
 
 <details>
 <summary>Working context for maintainers — click to expand</summary>
